@@ -28,7 +28,7 @@ def start_rl(mechanic_list):
             # Choose action from Q table
             a = np.argmax(Q[s, :] + np.random.randn(1, game_env.action_space.n) * (1. / (i + 1)))
             # Get new state & reward from environment
-            s1, r, d, _ = game_env.step(a)
+            s1, r, d, _ = game_env.step(a) # step forward and simulate current game state
             # Update Q-Table with new knowledge
             Q[s, a] = Q[s, a] + eta * (r + gma * np.max(Q[s1, :]) - Q[s, a])
             rAll += r

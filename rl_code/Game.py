@@ -22,7 +22,10 @@ class Game(gym.Env):
 
   def step(self, action):
     # Execute one time step within the environment
-    pass
+    r = self.simulate()
+    s1 = self.represent_state()
+    d = False
+    return s1, r, d, 0.0
   def reset(self):
     # Reset the state of the environment to an initial state
     return 'resetted'
@@ -30,4 +33,6 @@ class Game(gym.Env):
     # Render the environment to the screen
     return 'rendered'
   def simulate(self):
-    pass
+    return 0.0
+  def represent_state(self):
+    return self
