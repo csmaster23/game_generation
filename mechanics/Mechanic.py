@@ -1,15 +1,17 @@
 from mechanics.Piece import Piece
-
+from mechanics.Entity import Entity
 
 # ---- Start/Base ----
-
-# Entity - Board Locations, Cards, Pieces
-    # List of other entities
-    # Unique Id
 
 # Entity Movement Rules
     # Describe how movement occurs
     # Adjacency Matrix for each entity
+
+# Entity - Board Locations, Cards, Pieces
+    # List of other entities
+    # Unique Id
+    # Contains Entity Movements Rules
+
 
 # Mechanisms
     # Creates entity
@@ -25,7 +27,7 @@ from mechanics.Piece import Piece
     # Stores trackers owned by player
     # Selects and performs actions
 
-# Round
+# Round...?
     # returns player Id of who won that specific round
     # Method that returns winner for round
 
@@ -64,9 +66,27 @@ from mechanics.Piece import Piece
 
 
 class Mechanic():
-    def __init__(self):
-        self.pieces = []
+    def __init__(self, p):
+        self.p = p              # parameters
+        self.entities = self.create_entities(self.p["layer_dict"])
 
+    def create_entities(self):
+        return []
 
     def add_piece(self, piece):
         self.pieces.append(piece)
+
+
+    def combine_layers(self):
+        pass
+
+    def generic_piece_entity(self, mechanic_type, num_pieces):
+        entities = []
+        for i in range(num_pieces):
+            entities.append(Entity(self.p, mechanic_type))
+        return entities
+
+    def square_grid_method(self, entities_in):
+        # define entity group from the squares
+        # create square grid generator
+        pass
