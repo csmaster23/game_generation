@@ -68,7 +68,7 @@ from mechanics.Entity import Entity
 class Mechanic():
     def __init__(self, p):
         self.p = p              # parameters
-        self.entities = self.create_entities(self.p["layer_dict"])
+        self.entities = self.create_entities()
 
     def create_entities(self):
         return []
@@ -90,3 +90,28 @@ class Mechanic():
         # define entity group from the squares
         # create square grid generator
         pass
+
+    def static_capture_formalization(self, piece, flags, p):
+        # flags = [ hop_capture, forward_capture, backward_capture, left_capture, right_capture, d_45_capture, d_135_capture, d_225_capture, d_315_capture ] Bools
+        # Hop To Capture =
+        # Hop Over Capture =
+        # Drag Capture =
+        for f in flags:
+            piece.pattern_dict[f] = None
+
+    def static_movement_formalization(self, piece, flags, p):
+        # flags = [ hop_capture, forward_capture, backward_capture, left_capture, right_capture, d_45_capture, d_135_capture, d_225_capture, d_315_capture ] Bools
+        pass
+
+    def static_capture_piece_init(self, pieces, pattern_type, move_tuple):
+        for piece in pieces:
+            piece
+
+
+
+    def static_capture_pattern(self, pattern, num_tuple, p):
+        pass
+
+
+    # hop = 2*, 4*, 5*, 7*
+    # drag = 1*,....8*
