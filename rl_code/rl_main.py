@@ -24,6 +24,12 @@ def start_rl(mechanic_list):
         # The Q-Table learning algorithm
         while j < 99:
             game_env.render()
+
+            entity_list = agent.generate_entities()
+            entities_with_ids, possible_actions = agent.entity_combinations()
+            game_obj = agent.rule_generation()
+
+
             j += 1
             # Choose action from Q table
             a = np.argmax(Q[s, :] + np.random.randn(1, game_env.action_space.n) * (1. / (i + 1)))
