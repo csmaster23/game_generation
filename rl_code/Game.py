@@ -19,6 +19,7 @@ class Game(gym.Env):
     N_CHANNELS = 0
     self.observation_space = spaces.Box(low=0, high=255, shape=
                     (HEIGHT, WIDTH, N_CHANNELS), dtype=np.uint8)
+    self.mechanic_list = mechanic_list
 
   def step(self, action):
     # Execute one time step within the environment
@@ -36,16 +37,18 @@ class Game(gym.Env):
     return 0.0
   def represent_state(self):
     return self
-  def generate_states(self, agent, mechanic_list):
+  def generate_entity_states(self, agent):
     state = []
-    mechanic_dicts = self.get_mechanic_dicts(mechanic_list)
-    # ...
-    # Jamison stub
-    # ...
+    mechanic_dicts = self.get_mechanic_dicts()
+    mechanic_widths = []
+    for dict in mechanic_dicts:
+      mechanic_widths.append(np.prod([dict[key][1] for key in dict]))
+    print()
     return state
 
-  def get_mechanic_dicts(self, mechanics):
+  def get_mechanic_dicts(self):
     dicts = []
+    mechanics = self.mechanic_list
     if "Square-Grid Movement" in mechanics:
       dicts.append( self.square_dict() )
     if "Static Capture" in mechanics:
@@ -59,17 +62,28 @@ class Game(gym.Env):
   def square_dict(self):
     sq = {}
     # Key                   (Min, Max)
-    sq["num_grids"] =       (1, 2)
-    sq["squares"] =         (2, 5)
-    sq["piece_types"] =     (1, 3)
-    sq["num_patterns"] =    (1, 3)
+    sq["num_grids"] =       (1, 1)
+    sq["square_types"] =         (1, 1)
+    sq["piece_types"] =     (1, 6)
+    sq["num_patterns"] =    (1, 2)
+    sq["pattern_length"] =  (1, 3)
+    sq["pattern_symbols"] = (9, 9)
     return sq
 
   def capture_dict(self):
     cp = {}
     # Key                   (Min, Max)
     cp["num_grids"] =       (1, 2)
-    cp["squares"] =         (2, 5)
+    cp["square_types"] =    (2, 5)
     cp["piece_types"] =     (1, 3)
     cp["num_patterns"] =    (1, 3)
+    cp["pattern_length"] =  (1, 3)
+    cp["pattern_symbols"] = (9, 9)
     return cp
+
+if __name__=='__main__':
+
+  mechanic_list = ["Square-Grid Movement", "Static Capture"]
+  game = Game(mechanic_list)
+  agent = None
+  state = game.generate_entity_states(agent)

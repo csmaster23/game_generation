@@ -28,11 +28,17 @@ def start_rl(mechanic_list):
         # The Q-Table learning algorithm
         while j < 99:
             game_env.render()
-            state = game_env.generate_states(agent, mechanic_list)
-            entity_list = agent.generate_entities()
-            entities_with_ids, possible_actions = agent.entity_combinations()
-            game_obj = agent.rule_generation()
 
+            # Generate intitial entities
+            entity_states = game_env.generate_entity_states(agent)
+            entity_list = game_env.generate_entities(entity_states)
+
+            # Combine entities
+            combo_states = game_env.generate_entity_combo_states(agent, entity_states)
+            final_entity_list = game_env.combine_entities(entity_list, combo_states)
+
+            # Generate game rules
+            game_obj = game_env.rule_generation(agent, final_entity_list)
 
             j += 1
             # Choose action from Q table
