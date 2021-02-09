@@ -12,6 +12,7 @@ class Game(gym.Env):
     # They must be gym.spaces objects
     # Example when using discrete actions:
     N_DISCRETE_ACTIONS = 0
+    N_MECHANICS = 2
     self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
     # Example for using image as input:
     HEIGHT = 0
@@ -40,11 +41,17 @@ class Game(gym.Env):
   def generate_entity_states(self, agent):
     state = []
     mechanic_dicts = self.get_mechanic_dicts()
-    mechanic_widths = []
+    mechanic_widths, num_levels = [], []
     for dict in mechanic_dicts:
       mechanic_widths.append(np.prod([dict[key][1] for key in dict]))
-    print()
-    return state
+      num_levels.append(len(dict.keys()))
+    width = max(mechanic_widths)
+    height = max(num_levels)
+
+    # Create the entity states based off the max and min values
+    entity_states = np.zeros((len(mechanic_dicts), width, height))
+
+    return entity_state, max_dict
 
   def get_mechanic_dicts(self):
     dicts = []
@@ -61,25 +68,30 @@ class Game(gym.Env):
 
   def square_dict(self):
     sq = {}
-    # Key                   (Min, Max)
-    sq["num_grids"] =       (1, 1)
-    sq["square_types"] =         (1, 1)
-    sq["piece_types"] =     (1, 6)
-    sq["num_patterns"] =    (1, 2)
-    sq["pattern_length"] =  (1, 3)
-    sq["pattern_symbols"] = (9, 9)
+    # Key[level]            (Min, Max)
+    sq[1] =                 (1, 1)  # num_grids
+    sq[2] =                 (1, 1)  # square_types
+    sq[3] =                 (1, 6)  # piece_types
+    sq[4] =                 (1, 2)  # num_patterns
+    sq[5] =                 (1, 3)  # pattern_length
+    sq[6] =                 (9, 9)  # pattern_symbols
     return sq
 
+  # [ 1 0 0 0  ... 0 0 0 0 ]
+  # [ 0 1 0 0  ... 0 0 0 0 ]
+  # [ 1 0 0 0  ][ 1 0 0 0  ]
+  #
+
   def capture_dict(self):
-    cp = {}
-    # Key                   (Min, Max)
-    cp["num_grids"] =       (1, 2)
-    cp["square_types"] =    (2, 5)
-    cp["piece_types"] =     (1, 3)
-    cp["num_patterns"] =    (1, 3)
-    cp["pattern_length"] =  (1, 3)
-    cp["pattern_symbols"] = (9, 9)
-    return cp
+    sq = {}
+    # Key[level]            (Min, Max)
+    sq[0] =                 (1, 1)  # num_grids
+    sq[1] =                 (1, 1)  # square_types
+    sq[2] =                 (1, 6)  # piece_types
+    sq[3] =                 (1, 2)  # num_patterns
+    sq[4] =                 (1, 3)  # pattern_length
+    sq[5] =                 (9, 9)  # pattern_symbols
+    return sq
 
 if __name__=='__main__':
 
