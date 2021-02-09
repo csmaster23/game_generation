@@ -1,13 +1,17 @@
 import os
 import numpy as np
 from rl_code.Game import Game
+from rl_code.Agent import Agent
 
 def start_rl(mechanic_list):
-    agent = init_agent()
+    p = {}  # params
+    p['mechanics'] = mechanic_list
+    agent = init_agent(p)
 
     # 1. Load Environment and Q-table structure
     game_env = init_game(mechanic_list)
-    Q = np.zeros([game_env.observation_space.n, game_env.action_space.n])
+    # Q = np.zeros([game_env.observation_space.n, game_env.action_space.n])
+    Q = np.zeros([5,5])
     # game_env.obeservation.n, env.action_space.n gives number of states and action in env loaded
     # 2. Parameters of Q-leanring
     eta = .628
@@ -24,7 +28,7 @@ def start_rl(mechanic_list):
         # The Q-Table learning algorithm
         while j < 99:
             game_env.render()
-
+            state = game_env.generate_states(agent, mechanic_list)
             entity_list = agent.generate_entities()
             entities_with_ids, possible_actions = agent.entity_combinations()
             game_obj = agent.rule_generation()
@@ -47,8 +51,8 @@ def start_rl(mechanic_list):
     return game_env
 
 
-def init_agent():
-    return "RL Agent Object"
+def init_agent(p):
+    return Agent(p)
 
 def init_game(mechanic_list):
     return Game(mechanic_list)

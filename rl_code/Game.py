@@ -36,3 +36,40 @@ class Game(gym.Env):
     return 0.0
   def represent_state(self):
     return self
+  def generate_states(self, agent, mechanic_list):
+    state = []
+    mechanic_dicts = self.get_mechanic_dicts(mechanic_list)
+    # ...
+    # Jamison stub
+    # ...
+    return state
+
+  def get_mechanic_dicts(self, mechanics):
+    dicts = []
+    if "Square-Grid Movement" in mechanics:
+      dicts.append( self.square_dict() )
+    if "Static Capture" in mechanics:
+      dicts.append( self.capture_dict() )
+    print("Dictionaries: \n%s" % str(dicts))
+    # .
+    # .
+    # .
+    return dicts
+
+  def square_dict(self):
+    sq = {}
+    # Key                   (Min, Max)
+    sq["num_grids"] =       (1, 2)
+    sq["squares"] =         (2, 5)
+    sq["piece_types"] =     (1, 3)
+    sq["num_patterns"] =    (1, 3)
+    return sq
+
+  def capture_dict(self):
+    cp = {}
+    # Key                   (Min, Max)
+    cp["num_grids"] =       (1, 2)
+    cp["squares"] =         (2, 5)
+    cp["piece_types"] =     (1, 3)
+    cp["num_patterns"] =    (1, 3)
+    return cp

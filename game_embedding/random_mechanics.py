@@ -6,14 +6,17 @@ from mechanics.Square_Grid_Movement import Square_Grid_Movement_Class
 
 def generate_random_mechanics(num):
     print("Number of mechanics being generated: %d" % num)
-    num = 1
+    num = 2
     selected = []
     all_mechanics = []
-    all_mechanics.append(Hex_Grid_Movement_Class())
-    all_mechanics.append(Square_Grid_Movement_Class())
-    for _ in num:
-        selected.append(random.choice(all_mechanics))
-    return selected
+    # all_mechanics.append(Hex_Grid_Movement_Class())
+    # all_mechanics.append(Square_Grid_Movement_Class())
+    all_mechanics.append("Square-Grid Movement")
+    all_mechanics.append("Static Capture")
+    return all_mechanics
+    # for _ in num:
+    #     selected.append(random.choice(all_mechanics))
+    # return selected
 
 
 
