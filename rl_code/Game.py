@@ -12,7 +12,7 @@ class Game(gym.Env):
   """Custom Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, mechanic_list):
+  def __init__(self, mechanic_list, verbose=False):
     super(Game, self).__init__()
     # Define action and observation space
     # They must be gym.spaces objects
@@ -28,6 +28,7 @@ class Game(gym.Env):
     self.observation_space = spaces.Box(low=0, high=255, shape=
                     (HEIGHT, WIDTH, N_CHANNELS), dtype=np.uint8)
     self.mechanic_list = mechanic_list
+    self.verbose=verbose
 
   def step(self, action):
     # Execute one time step within the environment
@@ -58,8 +59,6 @@ class Game(gym.Env):
       for dict in mechanic_dicts.values():
         maxxes.append(dict[level][1])
       max_dict[level] = max(maxxes) # + 1 # We need to account for the choice of zero
-      if level == 6: # On each of these levels, we do not have the option to put zero
-        max_dict[level] -= 1
 
     # Get the empty entity state matrix
     height = self.max_level + 1
@@ -77,29 +76,38 @@ class Game(gym.Env):
       cur_dict = mechanic_dicts[mechanic]
 
       # Recurse down until we have made all the selections we need
-      self.make_agent_selections(agent, entities_state, cur_dict, max_dict, 0, row_start, row_stop, 1)
+      self.make_agent_selections(agent, entities_state, cur_dict, max_dict, 0, row_start, row_stop)
 
     return entities_state, max_dict
 
-  def make_agent_selections(self, agent, entities_state, cur_dict, max_dict, level, row_start, row_stop, prev_choice):
-    if not np.any(entities_state[level, row_start:row_stop]) or level == self.max_level:
+  def make_agent_selections(self, agent, entities_state, cur_dict, max_dict, level, row_start, row_stop):
+    # if not np.any(entities_state[level, row_start:row_stop]):
+    #   print('fail 1')
+    #   return None
+
+    new_level = level + 1
+    width = (row_stop - row_start)
+    cur_min, cur_max = cur_dict[new_level]
+
+    # Agent makes a decision
+    selection = agent.take_action(cur_min, cur_max)
+
+    # Update our state representation
+    entities_state[new_level, row_start + selection - 1] = 1
+
+    if self.verbose:
+      print("On level:", new_level, "the agent chose", selection, "out of", cur_min, "through", cur_max, "with a max of",
+            max_dict[new_level])
+      print(entities_state[new_level, row_start:row_stop])
+
+    if new_level == self.max_level:
       return None
 
-    level += 1
-    width = row_stop - row_start
-    for i in range(prev_choice):
-      new_row_start = row_start + i * (width // max_dict[level])
-      new_row_stop = row_start + (i+1) * (width // max_dict[level])
-      cur_min, cur_max = cur_dict[level]
+    for i in range(selection):
+      new_row_start = row_start + i * (width // max_dict[new_level])
+      new_row_stop = row_start + (i + 1) * (width // max_dict[new_level])
 
-      # Agent makes a decision
-      selection = agent.take_action(cur_min, cur_max)
-
-      # Update our state representation
-      entities_state[level, new_row_start + selection] = 1
-      print("On level:", level, "the agent chose", selection, "out of", cur_min, "through", cur_max, "with a max of", max_dict[level] - 1)
-      print(entities_state[level, new_row_start:new_row_stop])
-      self.make_agent_selections(agent, entities_state, cur_dict, max_dict, level, new_row_start, new_row_stop, selection)
+      self.make_agent_selections(agent, entities_state, cur_dict, max_dict, new_level, new_row_start, new_row_stop)
 
 # [ 0 0  0 0  0 0 ] 1 option level 0
 # [ 0 0  0 0  0 0 ] 3 options level 1
@@ -119,6 +127,7 @@ class Game(gym.Env):
     # .
     return dicts
 
+  # For these dictionaries, the min is always 1
   def square_dict(self):
     sq = {}
     # Key[level]            (Min, Max)
