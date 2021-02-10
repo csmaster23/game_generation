@@ -1,4 +1,12 @@
 from mechanics.Entity import Entity
+import numpy as np
+
+class RandomAgent():
+    def __init__(self):
+        pass
+
+    def take_action(self, min_choice, max_choice):
+        return np.random.randint(min_choice, max_choice+1)
 
 class Agent():
     def __init__(self, p):
