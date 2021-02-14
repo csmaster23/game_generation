@@ -38,6 +38,40 @@ class Game(gym.Env):
     return 0.0
   def represent_state(self):
     return self
+
+  def generate_entities(self, entity_states, max_dict):
+    print("\n--- Top of Generate Entities ---")
+    entity_list = []
+    max_dict = { 0:2, 1:1, 2:1, 3:3, 4:2, 5:3, 6:9 }
+    #            mec  grid sq   typ  pat  len  sym
+    entity_states = np.asarray( [
+      [ 1,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,      0,1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0 ], # mechanic one-hot encoding
+      [ 1,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,      1,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0 ], # num grids
+      [ 1,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,      1,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0 ], # square types
+      [ 0,0,1,0,0,0,0,0,0, 0,0,0,0,1,0,0,0,0, 0,1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,      0,1,0,0,0,0,0,0,0, 0,0,0,0,0,1,0,0,0, 0,0,0,1,0,0,0,0,0, 0,0,0,0,0,0,0,0,0 ], # piece types max 6
+      [ 0,1,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0,0, 0,1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,      0,1,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0 ], # num patterns
+      [ 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,      0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0 ], # pattern len
+      [ 0,1,0,0,0,0,0,0,0, 0,0,0,0,0,1,0,0,0, 0,0,0,0,0,0,0,0,1, 1,0,0,0,0,0,0,0,0,      0,0,0,0,0,0,0,1,0, 0,0,0,1,0,0,0,0,0, 0,0,0,0,0,0,0,1,0, 0,0,0,0,1,0,0,0,0 ]  # symbol
+    ] )
+    print("Entity States: %s" % str(entity_states))
+    mec_state_list = lst = np.hsplit(entity_states, len(self.mechanic_list)) # this splits the giant array into mechanic parts
+    for mec in mec_state_list:
+      entity_list.append( self.entity_list_per_mechanic(mec, max_dict) )
+
+    return entity_list
+
+  def entity_list_per_mechanic(self, state, max_dict):
+    print("Top of Entity List for each mechanic")
+    print("Max dict: %s" % str(max_dict))
+    for row in state:
+      print(row)
+    entities = []
+    max_value = max_dict[max(max_dict, key=max_dict.get)]
+    print("Max valuez: %s" % str(max_value))
+
+    return entities
+
+
   def generate_entity_states(self, agent):
     state = []
     mechanic_dicts = self.get_mechanic_dicts()
@@ -49,8 +83,8 @@ class Game(gym.Env):
     height = max(num_levels)
 
     # Create the entity states based off the max and min values
-    entity_states = np.zeros((len(mechanic_dicts), width, height))
-
+    entity_state = np.zeros((len(mechanic_dicts), width, height))
+    max_dict = 0
     return entity_state, max_dict
 
   def get_mechanic_dicts(self):
@@ -61,9 +95,6 @@ class Game(gym.Env):
     if "Static Capture" in mechanics:
       dicts.append( self.capture_dict() )
     print("Dictionaries: \n%s" % str(dicts))
-    # .
-    # .
-    # .
     return dicts
 
   def square_dict(self):

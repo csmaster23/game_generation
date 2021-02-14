@@ -30,8 +30,8 @@ def start_rl(mechanic_list):
             game_env.render()
 
             # Generate intitial entities
-            entity_states = game_env.generate_entity_states(agent)
-            entity_list = game_env.generate_entities(entity_states)
+            entity_states, max_dict = game_env.generate_entity_states(agent)
+            entity_list = game_env.generate_entities(entity_states, max_dict)
 
             # Combine entities
             combo_states = game_env.generate_entity_combo_states(agent, entity_states)
