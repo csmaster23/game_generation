@@ -1,12 +1,18 @@
 import os
 import numpy as np
 from rl_code.Game import Game
-from rl_code.Agent import Agent
+from rl_code.Agent import Agent, RandomAgent, CreatorAgent
+from rl_code.Attention import do_some_attention, Attention_Model
 
 def start_rl(mechanic_list):
     p = {}  # params
+    # p['mechanics'] = mechanic_list
+    mechanic_list = ["Square-Grid Movement", "Betting"]
     p['mechanics'] = mechanic_list
+    # game = Game(mechanic_list)
+    # agent = CreatorAgent()
     agent = init_agent(p)
+    # attention_model = Attention_Model()
 
     # 1. Load Environment and Q-table structure
     game_env = init_game(mechanic_list)
@@ -30,12 +36,16 @@ def start_rl(mechanic_list):
             game_env.render()
 
             # Generate intitial entities
-            entity_states, max_dict = game_env.generate_entity_states(agent)
-            entity_list = game_env.generate_entities(entity_states, max_dict)
+            # state, trajectories = game.generate_entity_states(agent)
+            state, trajectories = game_env.generate_entity_states(agent)
 
+            attention_model = Attention_Model(num_entities=state.size()[0])
+            attention_out = do_some_attention(state, attention_model)
+
+            # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities
-            combo_states = game_env.generate_entity_combo_states(agent, entity_states)
-            final_entity_list = game_env.combine_entities(entity_list, combo_states)
+            combo_states = game_env.generate_entity_combo_states(agent, state)
+            final_entity_list = game_env.combine_entities(state, combo_states)
 
             # Generate game rules
             game_obj = game_env.rule_generation(agent, final_entity_list)
@@ -58,7 +68,7 @@ def start_rl(mechanic_list):
 
 
 def init_agent(p):
-    return Agent(p)
+    return CreatorAgent()
 
 def init_game(mechanic_list):
     return Game(mechanic_list)

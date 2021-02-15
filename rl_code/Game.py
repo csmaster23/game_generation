@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 from gym import spaces
-from Agent import RandomAgent, CreatorAgent
+from rl_code.Agent import RandomAgent, CreatorAgent
 from torch import nn
 import torch
 
@@ -122,7 +122,7 @@ class Game(gym.Env):
 
     entity_markers = []
     # Run the RL Agent
-    for i, mechanic in enumerate(mechanic_list):
+    for i, mechanic in enumerate(self.mechanic_list):
       # row_start = i * (width // max_dict[0])
       # row_stop = (i+1) * (width // max_dict[0])
 
