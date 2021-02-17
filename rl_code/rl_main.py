@@ -39,12 +39,12 @@ def start_rl(mechanic_list):
             # state, trajectories = game.generate_entity_states(agent)
             state, trajectories = game_env.generate_entity_states(agent)
 
-            attention_model = Attention_Model(num_entities=state.size()[0])
+            attention_model = Attention_Model()
             attention_out = do_some_attention(state, attention_model)
 
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities
-            combo_states = game_env.generate_entity_combo_states(agent, state)
+            # combo_states = game_env.generate_entity_combo_states(agent, state)
             final_entity_list = game_env.combine_entities(state, combo_states)
 
             # Generate game rules
