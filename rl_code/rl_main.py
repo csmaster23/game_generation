@@ -40,7 +40,7 @@ def start_rl(mechanic_list):
             state, trajectories = game_env.generate_entity_states(agent)
 
             attention_model = Attention_Model()
-            attention_out = do_some_attention(state, attention_model)
+            indices_to_combine, all_embeddings = do_some_attention(state, trajectories, attention_model)
 
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities
