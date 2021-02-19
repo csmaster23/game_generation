@@ -45,7 +45,7 @@ def start_rl(mechanic_list):
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities
             # combo_states = game_env.generate_entity_combo_states(agent, state)
-            final_entity_list = game_env.combine_entities(state, combo_states)
+            final_entity_list = game_env.combine_entities(state)
 
             # Generate game rules
             game_obj = game_env.rule_generation(agent, final_entity_list)

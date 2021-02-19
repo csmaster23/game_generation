@@ -10,6 +10,23 @@ mechanic_types = {
   "Betting"       : 2,
 }
 
+interpret_level = {
+      0: "mechanic_num",
+      1: "num_groups",
+      2: "selected_group",
+      3: "selected_parent_entity", # Defaults to 0
+      4: "num_child_entities",
+      5: "selected_child_entity",
+      6: "num_action_types",
+      7: "selected_action_type",
+      8: "num_patterns",
+      9: "selected_pattern",
+      10: "pattern_length",
+      11: "pattern_symbol"
+    }
+
+
+
 class Game(gym.Env):
   """Custom Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
@@ -21,23 +38,27 @@ class Game(gym.Env):
     # Example when using discrete actions:
     N_DISCRETE_ACTIONS = 0
     self.num_possible_mechanics = 2
-    self.max_level = 8
+    self.max_level = 12
     self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
     # Example for using image as input:
     HEIGHT = 0
     WIDTH = 0
     N_CHANNELS = 0
+    self.max_options = 10
     self.observation_space = spaces.Box(low=0, high=255, shape=
                     (HEIGHT, WIDTH, N_CHANNELS), dtype=np.uint8)
     self.mechanic_list = mechanic_list
     self.verbose=verbose
 
+
+
+
   def step(self, action):
-    # Execute one time step within the environment
-    r = self.simulate()
-    s1 = self.represent_state()
-    d = False
-    return s1, r, d, 0.0
+      # Execute one time step within the environment
+      r = self.simulate()
+      s1 = self.represent_state()
+      d = False
+      return s1, r, d, 0.0
   def reset(self):
     # Reset the state of the environment to an initial state
     return 'resetted'
@@ -50,7 +71,7 @@ class Game(gym.Env):
     return self
 
 
-  def generate_entities(self, entity_states, max_dict):
+  def generate_entities(self, entity_states):
     print("\n--- Top of Generate Entities ---")
     entity_list = []
     max_dict = { 0:2, 1:1, 2:1, 3:3, 4:2, 5:3, 6:9 }
@@ -90,61 +111,32 @@ class Game(gym.Env):
     entity_embeddings (N, dim): A tensor of entity embeddings
     grouped_tree_trajectories (N, ?, max_level+1): A list of tensors with tree trajectories that describe how to create the different entities
     """
-    state = []
     mechanic_dicts = self.get_mechanic_dicts()
-    mechanic_widths, num_levels = [], []
-
-    #
-    # # Create the entity states based off the max and min values
-    # entity_state = np.zeros((len(mechanic_dicts), width, height))
-    # max_dict = 0
-    # return entity_state, max_dict
-
-    # First generated the max dict that breaks down the entity_states
-    max_dict = {0: len(mechanic_dicts)}
-    for level in range(1,self.max_level+1):
-      maxxes = []
-      for dict in mechanic_dicts.values():
-        maxxes.append(dict[level][1])
-      max_dict[level] = max(maxxes) # + 1 # We need to account for the choice of zero
 
     # We have a list of embeddings that represent the leaves of the tree. This is the current state
     # Are converted to embeddings before they are fed into the transformer
-    tree_trajectories = [torch.LongTensor([[0]*9])]
-
-    # Get the empty entity state matrix
-    # height = self.max_level + 1
-    width = np.prod([max_dict[key] for key in max_dict])
-    # entities_state = np.zeros((height, width))
+    tree_trajectories = [torch.LongTensor([[0]*self.max_level])]
 
     # Make sure we have enough slots to encode the mechanic types
-    # assert len(entities_state[0]) // len(mechanic_dicts) >= self.num_possible_mechanics
-
     entity_markers = []
     # Run the RL Agent
     for i, mechanic in enumerate(self.mechanic_list):
-      # row_start = i * (width // max_dict[0])
-      # row_stop = (i+1) * (width // max_dict[0])
-
       tree_trajectories[-1][0, 0] = mechanic_types[mechanic]
-      # entities_state[0, row_start + mechanic_types[mechanic]] = 1
-      cur_dict = mechanic_dicts[mechanic]
+      cur_dict = mechanic_dicts[mechanic_types[mechanic]]
 
       # Recurse down until we have made all the selections we need
-      self.make_agent_selections(agent, tree_trajectories, cur_dict, max_dict, 0, entity_markers)
+      self.make_agent_selections(agent, tree_trajectories, cur_dict, 0, entity_markers)
 
+    tree_trajectories.pop() # The last tree trajectory is extra
     tree_trajectories = torch.stack(tree_trajectories)
 
     if self.verbose:
       print(tree_trajectories)
 
     # Extract entity embeddings
-    entity_embeddings = self.get_entity_embeddings(agent, tree_trajectories, entity_markers)
+    child_embeddings, child_trajectories, parent_embeddings, parent_trajectories = self.get_entity_embeddings(agent, tree_trajectories, mechanic_dicts)
 
-    # Will tell us how to create the actual entity objects later
-    grouped_tree_trajectories = self.get_grouped_tree_trajectories(tree_trajectories, entity_markers)
-
-    return entity_embeddings, grouped_tree_trajectories
+    return child_embeddings, child_trajectories, parent_embeddings, parent_trajectories
 
   def get_grouped_tree_trajectories(self, tree_trajectories, entity_markers):
     grouped_tree_trajectories = []
@@ -153,74 +145,121 @@ class Game(gym.Env):
         stop = -1
       else:
         stop = entity_markers[i + 1]
-      grouped_tree_trajectories.append(tree_trajectories[entity_markers[i]:stop].reshape(-1,self.max_level+1))
+      # grouped_tree_trajectories.append(tree_trajectories[entity_markers[i]:stop].reshape(-1,self.max_level+1))
     return grouped_tree_trajectories
 
-  def get_entity_embeddings(self, agent, tree_trajectories, entity_markers):
+  def get_entity_embeddings(self, agent, tree_trajectories, mechanic_dicts):
     entity_embeddings = []
     N = tree_trajectories.shape[0]
+    tree_trajectories = tree_trajectories.reshape(N, -1)
+
+    # Get the different items we need to determine entity types
+    mechanic_nums = tree_trajectories[:,0]
+    group_nums = tree_trajectories[:,2]
+    entity_nums = tree_trajectories[:,5]
+
+    # Get the indices for the different entities
+    child_entity_indices = np.where((entity_nums[:-1] != entity_nums[1:]) | (group_nums[:-1] != group_nums[1:]) | (mechanic_nums[:-1] != mechanic_nums[1:]))[0]
+    child_entity_indices += 1
+    parent_entity_indices = np.where((group_nums[:-1] != group_nums[1:]) | (mechanic_nums[:-1] != mechanic_nums[1:]))[0]
+    parent_entity_indices += 1
+
+    # Get parent embeddings and trajectories
+    parent_entity_indices = np.concatenate([np.array([0]), parent_entity_indices])
+    parent_trajectories = []
+    for idx in parent_entity_indices:
+      mechanic_type = tree_trajectories[idx, 0].item()
+      for num_parent in range(1, mechanic_dicts[mechanic_type]["num_parent_entity_types"]+1):
+        parent_embedding = tree_trajectories[idx].clone()
+        parent_embedding[3] = num_parent
+        parent_embedding[4:] = 0
+        parent_trajectories.append(parent_embedding)
+    parent_trajectories = torch.stack(parent_trajectories)
+
     with torch.no_grad():
-      tree_embeddings = agent.gen_embedder(tree_trajectories).reshape(N, -1)
-      for i, idx in enumerate(entity_markers):
-        if i == len(entity_markers) - 1:
-          stop = -1
-        else:
-          stop = entity_markers[i+1]
-        entity_embedding = tree_embeddings[entity_markers[i]:stop].mean(0)
-        unique_id = agent.gen_embedder(torch.LongTensor([[i+1]])).reshape(-1)
-        entity_embeddings.append(torch.cat([entity_embedding, unique_id]))
+      N = tree_trajectories.shape[0]
+      tree_embeddings = agent.gen_embedder(tree_trajectories).reshape(N,-1)
+      N = parent_trajectories.shape[0]
+      parent_embeddings = agent.gen_embedder(parent_trajectories).reshape(N,-1)
 
-    return torch.stack(entity_embeddings)
+    # Now get the child entities and trajectories
+    start_idx = 0
+    child_entity_embeddings = []
+    child_trajectories = []
+    for end_idx in child_entity_indices:
+      child_trajectories.append(tree_trajectories[start_idx:end_idx,:])
+      child_entity_embeddings.append(torch.mean(tree_embeddings[start_idx:end_idx,:],dim=0))
+      start_idx = end_idx
+    child_entity_embeddings.append(torch.mean(tree_embeddings[start_idx:, :], dim=0))
+    child_trajectories.append(tree_trajectories[start_idx:, :])
+    child_embeddings = torch.stack(child_entity_embeddings)
 
-  def make_agent_selections(self, agent, tree_trajectories, cur_dict, max_dict, level, entity_markers):
-    # if not np.any(entities_state[level, row_start:row_stop]):
-    #   print('fail 1')
-    #   return None
+    return child_embeddings, child_trajectories, parent_embeddings, parent_trajectories
+
+  def make_agent_selections(self, agent, tree_trajectories, cur_dict, level, iteration=None):
 
     new_level = level + 1
-    # width = (row_stop - row_start)
-    cur_min, cur_max = cur_dict[new_level]
 
     # Need to zero out all entries so transformer knows where we are on the tree
     if tree_trajectories[-1][0, new_level] != 0:
       tree_trajectories[-1][0, new_level:] = 0
 
-    # Agent makes a decision
-    selection = agent.take_action(tree_trajectories, (cur_min, cur_max))
-    selection = int(selection[0].item())
+    if interpret_level[new_level] in ["selected_group", "selected_child_entity", "selected_pattern"]: # These actions are not selected
+      # Update our state representation
+      tree_trajectories[-1][0, new_level] = iteration
+      if self.verbose:
+        print("On level:", new_level, "it is iteration", iteration)
+      self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
+    elif interpret_level[new_level] in ["selected_parent_entity"]:
+      self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
+    elif interpret_level[new_level] in ["selected_action_type"]: # These actions need to be selected and masked out
+      probs = agent.take_action(tree_trajectories, self.selected_action_mask)
+      selection = torch.argmax(probs).item()
+      self.selected_action_mask[selection] = float("-inf")
+      if self.verbose:
+        print("On action selection. The agent chose", selection)
 
-    # Update our state representation
-    tree_trajectories[-1][0, new_level] = selection
-    if new_level == 4:
-      entity_markers.append(len(tree_trajectories)-1) # FIXME Should probably run some tests on this
+      # Update our state representation
+      tree_trajectories[-1][0, new_level] = selection
+      self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
 
-    # entities_state[new_level, row_start + selection - 1] = 1
 
-    if self.verbose:
-      print("On level:", new_level, "the agent chose", selection, "out of", cur_min, "through", cur_max, "with a max of",
-            max_dict[new_level])
+    else:
+      # Get the min and max options
+      cur_min, cur_max = cur_dict[interpret_level[new_level]]
 
-    if new_level == self.max_level:
-      tree_trajectories.append(tree_trajectories[-1].clone())
-      return None
+      # Create a mask for the agent
+      options = np.arange(self.max_options)
+      mask = torch.zeros(self.max_options)
+      mask[np.where((options < cur_min) | (options > cur_max))[0]] = float("-inf")
 
-    for i in range(selection):
-      # new_row_start = row_start + i * (width // max_dict[new_level])
-      # new_row_stop = row_start + (i + 1) * (width // max_dict[new_level])
-      self.make_agent_selections(agent, tree_trajectories, cur_dict, max_dict, new_level, entity_markers)
+      if interpret_level[new_level] == "num_action_types":
+        self.selected_action_mask = mask.clone()
 
-# [ 0 0  0 0  0 0 ] 1 option level 0
-# [ 0 0  0 0  0 0 ] 3 options level 1
-# [ 0 0][0 0][0 0 ] 2 options level 2
+      # Agent makes a decision
+      probs = agent.take_action(tree_trajectories, mask)
+      selection = torch.argmax(probs).item()
 
+      # Update our state representation
+      tree_trajectories[-1][0, new_level] = selection
+
+      if interpret_level[new_level] == "pattern_symbol":
+        tree_trajectories.append(tree_trajectories[-1].clone())  # FIXME we may have extra tree trajectory at the end
+        return None
+
+      if self.verbose:
+        print("On level:", new_level, "the agent chose", selection, "out of", cur_min, "through", cur_max)
+
+      for iteration in range(1,selection+1):
+        self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
 
   def get_mechanic_dicts(self):
     dicts = dict()
     mechanics = self.mechanic_list
     if "Square-Grid Movement" in mechanics:
-      dicts["Square-Grid Movement"] = self.square_dict()
+      dicts[mechanic_types["Square-Grid Movement"]] = self.square_dict()
     if "Betting" in mechanics:
-      dicts["Betting"] = self.betting_dict()
+      dicts[mechanic_types["Betting"]] = self.betting_dict()
     print("Dictionaries: \n%s" % str(dicts))
     return dicts
 
@@ -228,30 +267,33 @@ class Game(gym.Env):
   def square_dict(self):
     sq = {}
     # Key[level]            (Min, Max)
-    sq[1] =                 (1, 1)  # num_grids
-    sq[2] =                 (1, 1)  # square_types
-    sq[3] =                 (1, 6)  # piece_types
-    sq[4] =                 (1, 3)  # num_action_types
-    sq[5] =                 (1, 4)  # selected_action_type
-    sq[6] =                 (1, 2)  # num_patterns
-    sq[7] =                 (1, 3)  # pattern_length
-    sq[8] =                 (1, 9)  # pattern_symbols
+    sq["num_groups"] = (1, 1)  # num_group (how many of that mechanic there is)
+    # Should record which group we are on
+    sq["num_child_entities"] = (1, 6)  # num child entity types
+    # Should record child entity type we are on
+    sq["num_action_types"] = (1, 4)  # num_action_types
+    sq["num_patterns"] = (1, 2)  # num_patterns
+    # Should record which pattern we are looking at
+    sq["pattern_length"] = (1, 3)  # pattern_length
+    sq["pattern_symbol"] = (1, 9)  # pattern_symbol
+    sq["num_parent_entity_types"] = 1
     return sq
 
   # For these dictionaries, the min is always 1
   def betting_dict(self):
     sq = {}
     # Key[level]            (Min, Max)
-    sq[1] = (1, 1)  # num_grids
-    sq[2] = (1, 4)  # square_types
-    sq[3] = (1, 3)  # piece_types
-    sq[4] = (1, 3)  # num_action_types
-    sq[5] = (1, 2)  # selected_action_type
-    sq[6] = (1, 1)  # num_patterns
-    sq[7] = (1, 1)  # pattern_length
-    sq[8] = (1, 1)  # pattern_symbols
+    sq["num_groups"] = (1, 1)  # num_group (how many of that mechanic there is)
+    # Should record which group we are on
+    sq["num_child_entities"] = (2, 2)  # num child entity types
+    # Should record child entity type we are on
+    sq["num_action_types"] = (1, 2)  # num_action_types
+    sq["num_patterns"] = (1, 1)  # num_patterns
+    # Should record which pattern we are looking at
+    sq["pattern_length"] = (1, 1)  # pattern_length
+    sq["pattern_symbol"] = (1, 1)  # pattern_symbol
+    sq["num_parent_entity_types"] = 2
     return sq
-
   # [ 1 0 0 0  ... 0 0 0 0 ]
   # [ 0 1 0 0  ... 0 0 0 0 ]
   # [ 1 0 0 0  ][ 1 0 0 0  ]
@@ -273,5 +315,5 @@ if __name__=='__main__':
   mechanic_list = ["Square-Grid Movement", "Betting"]
   game = Game(mechanic_list)
   agent = CreatorAgent()
-  state, trajectories = game.generate_entity_states(agent)
+  child_embeddings, child_trajectories, parent_embeddings, parent_trajectories = game.generate_entity_states(agent)
   print()
