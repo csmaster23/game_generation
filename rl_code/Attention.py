@@ -9,7 +9,7 @@ def get_factors(n):
                 ([i, n//i] for i in range(1, int(n**0.5) + 1) if n % i == 0)))
 
 class Attention_Model():
-    def __init__(self, embedding_size=40, embedding_size_2=80):
+    def __init__(self, embedding_size=60, embedding_size_2=120):
         ## Make a 40 and 80 block for two rounds of combinations
         factor = max(get_factors(embedding_size)) # this is the number of heads to use, num_entities must be divisble by num_heads hence we get factors and pick largetst one
         factor_2 = max(get_factors(embedding_size_2))
@@ -79,6 +79,8 @@ def do_some_attention(embeddings, trajectories, attention_model):
 
 
 def update_mask(mask, indices, group_nums):
+    if len(indices) == 0:
+        return mask
     rows, cols = [], []
     for i in indices:                                   # get the mask for the the new combination values row wise
         rows.append( ( mask[i[0]]+mask[i[1]] ) )
@@ -143,7 +145,7 @@ def remove_duplicates(indices):
     return new_list
 
 
-def find_combinations(attention, threshold=.4):
+def find_combinations(attention, threshold=.2):
     indices = []
     for i, row in enumerate(attention):
         for j, ele in enumerate(row):
