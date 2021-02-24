@@ -5,6 +5,10 @@ from rl_code.Agent import Agent, RandomAgent, CreatorAgent
 from rl_code.Duplicate_Entities import Duplicate_Entities_Model
 from rl_code.Attention import do_some_attention, Attention_Model
 
+mechanic_types = {
+  "Square-Grid Movement" : 1,
+  "Betting"       : 2,
+}
 
 def start_rl(mechanic_list):
     p = {}  # params
@@ -43,14 +47,15 @@ def start_rl(mechanic_list):
 
             # ---------------------------------- ATTENTION FOR ENTITY COMBINATION --------------------------------------
             attention_model = Attention_Model()
-            indices_to_combine_child, child_embeddings = do_some_attention(child_embeddings, child_trajectories, attention_model)
-            indices_to_combine_parent, parent_embeddings = do_some_attention(parent_embeddings, [parent_trajectories], attention_model)
+            indices_to_combine_child, child_embeddings, child_comb_to_emb_map = do_some_attention(child_embeddings, child_trajectories, attention_model, is_child=True)
+            indices_to_combine_parent, parent_embeddings, parent_comb_to_emb_map = do_some_attention(parent_embeddings, parent_trajectories.tolist(), attention_model, is_child=False)
 
 
             # ---------------------------------------- ENTITY DUPLICATION ----------------------------------------------
-            duplicate_model = Duplicate_Entities_Model()
-            duplicate_child_vector = duplicate_model.transformer_duplicate( child_embeddings, child_trajectories, is_child=True )
-            duplicate_parent_vector = duplicate_model.transformer_duplicate( parent_embeddings, [parent_trajectories], is_child=False)
+            duplicate_model = Duplicate_Entities_Model(mechanic_types)
+            parent_duplicate_combined_dict = duplicate_model.transformer_duplicate(parent_embeddings, parent_trajectories.tolist(), parent_comb_to_emb_map, is_child=False)
+            child_duplicate_combined_dict = duplicate_model.transformer_duplicate( child_embeddings, child_trajectories, child_comb_to_emb_map, is_child=True )
+
 
 
             # entity_list = game_env.generate_entities(state, trajectories)

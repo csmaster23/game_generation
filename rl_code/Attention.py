@@ -45,37 +45,66 @@ class Attention_Model():
         symmetric_out = (soft_dot.T + soft_dot) / 2
         return symmetric_out
 
-def do_some_attention(embeddings, trajectories, attention_model):
-    att_thresh = 0.3
+def do_some_attention(embeddings, trajectories, attention_model, is_child=False):
+    att_thresh = 0.4
     print("top of do some attention")
     print("Embeddings with Tensor size: %s" % str(embeddings.size()))
+    comb_to_emb_map = {}
+    if is_child:
+        entity_group_nums = [traj[0][2].item() for traj in trajectories]
+        entity_mechanic_nums = [traj[0][0].item() for traj in trajectories]
+    else:
+        entity_group_nums = [traj[2] for traj in trajectories]
+        entity_mechanic_nums = [traj[0] for traj in trajectories]
+    custom_entity_groups = get_custom_entity_groups(entity_group_nums, entity_mechanic_nums)
 
-    # index 2 of trajectories shows the group number and anything with the same group number will be masked out
-    entity_group_nums = [traj[0][2].item() for traj in trajectories]
-
-    mask = create_mask(entity_group_nums)
+    mask = create_mask(custom_entity_groups)
 
     att_out = attention_model.find_attention(embeddings, mask)
 
-    indices_to_combine = find_combinations(att_out, threshold=att_thresh)
-    indices_to_combine = remove_duplicates(indices_to_combine)
-    mask = update_mask(mask, indices_to_combine, entity_group_nums)
+    first_indices_to_combine = find_combinations(att_out, threshold=att_thresh)
+    first_indices_to_combine = remove_duplicates(first_indices_to_combine)
+    print("Indices to combine first round: %s" % str(first_indices_to_combine))
+    mask = update_mask(mask, first_indices_to_combine, custom_entity_groups)
 
-    new_embeddings = []
+    new_embeddings, old_doubles = [], []
     for embedding in embeddings:
         concatted = torch.cat( (embedding, embedding) )
         new_embeddings.append(concatted)
-    for ind in indices_to_combine:
+        old_doubles.append(concatted)
+    for ind in first_indices_to_combine:
         concatted = torch.cat( (embeddings[ind[0]], embeddings[ind[1]]) )
         new_embeddings.append(concatted)
     all_embeddings = torch.stack(new_embeddings)
 
     # round 2 of attention
     all_att = attention_model.find_attention(all_embeddings, mask)
-    indices_to_combine = indices_to_combine + find_combinations(all_att, threshold=att_thresh)
-    indices_to_combine = remove_duplicates(indices_to_combine)
-    print("Indices to combine second round: %s" % str(indices_to_combine))
-    return indices_to_combine, all_embeddings
+    second_indices_to_combine = first_indices_to_combine + find_combinations(all_att, threshold=att_thresh)
+    second_indices_to_combine = remove_duplicates(second_indices_to_combine)
+    print("Indices to combine second round: %s" % str(second_indices_to_combine))
+
+    new_embeddings = []
+    for embedding in old_doubles:           # we go through doubles so we can get the originals doubled again to their final size
+        concatted = torch.cat((embedding, embedding))
+        new_embeddings.append(concatted)
+
+    for ind in first_indices_to_combine: #loop through first round of combinations (have to do this before we can do second so we can get correct embeddings concatted
+        concatted = torch.cat((embeddings[ind[0]], embeddings[ind[1]]))     # looks at original sized embeddings to combine them correctly for first round combinations
+        double_concatted = torch.cat((concatted, concatted))                # do this to double the first round of combined objects so we can have the correct final size for the entity embeddings for the first round of combinations
+        comb_to_emb_map[ind] = double_concatted
+        new_embeddings.append(double_concatted)
+
+    # temp_embeddings = torch.stack(new_embeddings)
+    for ind in second_indices_to_combine:
+        if ind in first_indices_to_combine:
+            continue
+        concatted = torch.cat((all_embeddings[ind[0]], all_embeddings[ind[1]]))
+        comb_to_emb_map[ind] = concatted
+        new_embeddings.append(concatted)
+
+
+    final_embeddings = torch.stack(new_embeddings)
+    return second_indices_to_combine, final_embeddings, comb_to_emb_map
 
 
 def update_mask(mask, indices, group_nums):
@@ -145,7 +174,7 @@ def remove_duplicates(indices):
     return new_list
 
 
-def find_combinations(attention, threshold=.2):
+def find_combinations(attention, threshold=.4):
     indices = []
     for i, row in enumerate(attention):
         for j, ele in enumerate(row):
@@ -155,3 +184,18 @@ def find_combinations(attention, threshold=.2):
                 else:
                     indices.append( (i, j) )
     return indices
+
+def get_custom_entity_groups(entity_group_nums, entity_mechanic_nums):
+    print("Entity group nums: %s" % str(entity_group_nums))
+    print("Entity Mechanic nums: %s" % str(entity_mechanic_nums))
+    custom_nums = []
+    existing_tuples = []
+    for i, (mech, group) in enumerate(zip(entity_mechanic_nums, entity_group_nums)):
+        tup = (mech, group)
+        if tup in existing_tuples:
+            custom_nums.append(len(existing_tuples)) # this will give us a custom group number for each unique mechanic group number pair
+        else:
+            existing_tuples.append(tup)
+            custom_nums.append(len(existing_tuples))
+
+    return custom_nums
