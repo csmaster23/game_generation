@@ -194,7 +194,7 @@ class Game(gym.Env):
     child_trajectories.append(tree_trajectories[start_idx:, :])
     child_embeddings = torch.stack(child_entity_embeddings)
 
-    return child_embeddings, child_trajectories, parent_embeddings, parent_trajectories
+    return child_embeddings, child_trajectories, parent_embeddings, [parent_trajectory for parent_trajectory in parent_trajectories]
 
   def make_agent_selections(self, agent, tree_trajectories, cur_dict, level, iteration=None):
 
