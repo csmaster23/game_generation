@@ -2,7 +2,9 @@ import os
 import numpy as np
 from rl_code.Game import Game
 from rl_code.Agent import Agent, RandomAgent, CreatorAgent
+from rl_code.Duplicate_Entities import Duplicate_Entities_Model
 from rl_code.Attention import do_some_attention, Attention_Model
+
 
 def start_rl(mechanic_list):
     p = {}  # params
@@ -37,10 +39,19 @@ def start_rl(mechanic_list):
 
             # Generate intitial entities
             # state, trajectories = game.generate_entity_states(agent)
-            state, trajectories = game_env.generate_entity_states(agent)
+            child_embeddings, child_trajectories, parent_embeddings, parent_trajectories = game_env.generate_entity_states(agent)
 
+            # ---------------------------------- ATTENTION FOR ENTITY COMBINATION --------------------------------------
             attention_model = Attention_Model()
-            indices_to_combine, all_embeddings = do_some_attention(state, trajectories, attention_model)
+            indices_to_combine_child, child_embeddings = do_some_attention(child_embeddings, child_trajectories, attention_model)
+            indices_to_combine_parent, parent_embeddings = do_some_attention(parent_embeddings, [parent_trajectories], attention_model)
+
+
+            # ---------------------------------------- ENTITY DUPLICATION ----------------------------------------------
+            duplicate_model = Duplicate_Entities_Model()
+            duplicate_child_vector = duplicate_model.transformer_duplicate( child_embeddings, child_trajectories, is_child=True )
+            duplicate_parent_vector = duplicate_model.transformer_duplicate( parent_embeddings, [parent_trajectories], is_child=False)
+
 
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities
