@@ -94,11 +94,11 @@ class Mechanic():
                 entity.parent_to_actions[parent_name] = {action_type}
 
             # Add to pattern
-            pattern_symbol = self.optional_pattern_symbols[detailed_trajectory["pattern_symbol"]]
+            pattern_symbol = self.all_pattern_symbols[action_type][detailed_trajectory["pattern_symbol"]]
             try:
-                self.optional_pattern_symbols[detailed_trajectory["selected_pattern"]].append(pattern_symbol)
+                self.all_pattern_symbols[action_type][detailed_trajectory["selected_pattern"]].append(pattern_symbol)
             except KeyError:
-                self.optional_pattern_symbols[action_type] = {detailed_trajectory["selected_pattern"]: [pattern_symbol]}
+                self.all_pattern_symbols[action_type] = {detailed_trajectory["selected_pattern"]: [pattern_symbol]}
         else:
             # Add parent name
             parent_name = self.parent_entity_names[detailed_trajectory["selected_parent_entity"]] + detailed_trajectory[

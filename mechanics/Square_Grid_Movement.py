@@ -10,8 +10,7 @@ class Square_Grid_Movement_Class(Mechanic):
             self.p = {"grid_height" : 5,
                       "grid_width" : 5,
                       "reflect_patterns": True,
-                      "replace_captured_pieces": False,
-                      "default_action_types" : ["remove_captured_piece"],
+                      "default_action_types" : ["remove_captured_piece"], # replace_captured_piece
                       "parent_entity_names" : ["square", "reserve"]}
         self.mechanic_type = "Square-Grid Movement"
         self.grid_height = self.p['grid_height']
@@ -24,8 +23,7 @@ class Square_Grid_Movement_Class(Mechanic):
                              3: "hop_over_capture",
                              4: "drag",
                              5: "hop"}
-        if self.p["replace_captured_pieces"]:
-            self.action_types["default"].append("replace_captured_piece")
+
         self.reflect_patterns = self.p["reflect_patterns"]
 
         # These pattern symbols can be used for all the actions
@@ -34,6 +32,16 @@ class Square_Grid_Movement_Class(Mechanic):
         }
         self.default_pattern_symbols = {
             1: "transfer"
+        }
+
+        self.all_pattern_symbols = {
+            "drag_to_capture": self.optional_pattern_symbols,
+            "hop_to_capture": self.optional_pattern_symbols,
+            "hop_over_capture": self.optional_pattern_symbols,
+            "drag": self.optional_pattern_symbols,
+            "hop": self.optional_pattern_symbols,
+            "remove_captured_piece": self.default_pattern_symbols,
+            "replace_captured_piece": self.default_pattern_symbols,
         }
 
 
