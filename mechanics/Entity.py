@@ -21,7 +21,7 @@ class Entity():
         :param entity_names: List of names for of each piece type that the entity belongs to. Each name includes a generic
         name (from the mechanic) and a subtype.
         :param parent_names: Names of the parents of this entity. This specifies which entity types it can move across.
-        Each name includes a generic name (from the mechanic) and a subtype.
+        Each name includes a generic name (from the mechanic) and a group number.
         :param parents_to_actions: A dictionary mapping a parent name to a list of action types (strings from mechanic)
         :param actions_to_patterns: A dictionary mapping an action type (string) to an action pattern (a sequence of entity
         group actions)
@@ -33,6 +33,7 @@ class Entity():
         self.parent_names = set() if parent_names is None else parent_names
         self.parents_to_actions = dict() if parents_to_actions is None else parents_to_actions
         self.actions_to_patterns = dict() if actions_to_patterns is None else actions_to_patterns
+        self.info = None
         if id is None:
             self.id = uuid.uuid1()
         else:

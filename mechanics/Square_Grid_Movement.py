@@ -10,13 +10,15 @@ class Square_Grid_Movement_Class(Mechanic):
             self.p = {"grid_height" : 5,
                       "grid_width" : 5,
                       "reflect_patterns": True,
-                      "replace_captured_pieces": False}
+                      "replace_captured_pieces": False,
+                      "default_action_types" : ["remove_captured_piece"],
+                      "parent_entity_names" : ["square", "reserve"]}
         self.mechanic_type = "Square-Grid Movement"
         self.grid_height = self.p['grid_height']
         self.grid_width = self.p['grid_width']
-        self.parent_entity_names = {1: "square", 2: "reserve"} # hand, draw_pile, discard_pile, playing_area
+        self.parent_entity_names = {i+1: name for i, name in enumerate(self.p["parent_entity_names"])} # hand, draw_pile, discard_pile, playing_area
         self.child_entity_name = "square_movement_piece"
-        self.action_types = {"default": ["remove_captured_piece"],
+        self.action_types = {"default": self.p["default_action_types"],
                              1: "drag_to_capture",
                              2: "hop_to_capture",
                              3: "hop_over_capture",
@@ -27,19 +29,19 @@ class Square_Grid_Movement_Class(Mechanic):
         self.reflect_patterns = self.p["reflect_patterns"]
 
         # These pattern symbols can be used for all the actions
-        self.pattern_symbols1 = {
+        self.option_pattern_symbols = {
             1: "NW", 2: "N", 3: "NE", 4: "W", 5: "E", 6: "SW", 7: "S", 8: "SE", 9: "*"
         }
-        self.pattern_symbols2 = {
+        self.default_pattern_symbols1 = {
             1: "transfer"
         }
-        self.all_pattern_symbols = {"remove_captured_piece" : self.pattern_symbols2,
-                             "drag_to_capture": self.pattern_symbols1,
-                             "hop_to_capture": self.pattern_symbols1,
-                             "hop_over_capture": self.pattern_symbols1,
-                             "drag": self.pattern_symbols1,
-                             "hop": self.pattern_symbols1,
-                             "replace_captured_piece": self.pattern_symbols2}
+        self.all_pattern_symbols = {"remove_captured_piece" : self.default_pattern_symbols1,
+                             "drag_to_capture": self.option_pattern_symbols,
+                             "hop_to_capture": self.option_pattern_symbols,
+                             "hop_over_capture": self.option_pattern_symbols,
+                             "drag": self.option_pattern_symbols,
+                             "hop": self.option_pattern_symbols,
+                             "replace_captured_piece": self.default_pattern_symbols1}
 
 
     def mechanic_dict(self):
@@ -54,7 +56,7 @@ class Square_Grid_Movement_Class(Mechanic):
         # Should record which pattern we are looking at
         sq["pattern_length"] = (1, 3)  # pattern_length
         sq["pattern_symbol"] = (1, max([x for x in self.pattern_symbols1.keys() if type(x) is int]))  # pattern_symbol
-        sq["num_parent_entity_types"] = 2
+        sq["num_parent_entity_types"] = len(self.parent_entity_names)
         return sq
 
     interpret_level = {
@@ -93,9 +95,9 @@ class Square_Grid_Movement_Class(Mechanic):
             # Add to pattern
             pattern_symbol = self.all_pattern_symbols[action_type][detailed_trajectory["pattern_symbol"]]
             try:
-                self.actions_to_patterns[action_type]
+                self.actions_to_patterns[action_type].append()
             except KeyError:
-                self.actions_to_patterns
+                self.actions_to_patterns[action_type] = {detailed_trajectory["selected_pattern"] : []}
 
             self.parents_to_actions = set() if parents_to_actions is None else parents_to_actions
             self.actions_to_patterns = set() if actions_to_patterns is None else actions_to_patterns
