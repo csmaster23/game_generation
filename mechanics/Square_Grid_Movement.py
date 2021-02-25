@@ -44,7 +44,6 @@ class Square_Grid_Movement_Class(Mechanic):
             "replace_captured_piece": self.default_pattern_symbols,
         }
 
-
     def get_mechanic_dict(self):
         sq = {}
         # Key[level]            (Min, Max)

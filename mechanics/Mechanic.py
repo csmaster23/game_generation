@@ -72,7 +72,7 @@ class Mechanic():
         self.entities = self.create_entities()
 
     def add_default_actions_to_child(self, entity):
-
+        pass
 
     def add_to_entity(self, entity, tree_trajectory):
 
