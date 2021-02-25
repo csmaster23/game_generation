@@ -1,9 +1,11 @@
 import os
 import numpy as np
 from rl_code.Game import Game
+from mechanics.Cards import Deck_of_Cards_Class
 from rl_code.Agent import Agent, RandomAgent, CreatorAgent
 from rl_code.Duplicate_Entities import Duplicate_Entities_Model
 from rl_code.Attention import do_some_attention, Attention_Model
+from mechanics.Square_Grid_Movement import Square_Grid_Movement_Class
 
 mechanic_types = {
   "Square-Grid Movement" : 1,
@@ -13,7 +15,7 @@ mechanic_types = {
 def start_rl(mechanic_list):
     p = {}  # params
     # p['mechanics'] = mechanic_list
-    mechanic_list = ["Square-Grid Movement", "Betting"]
+    mechanic_list = ["Square-Grid Movement", "Deck-of-Cards"] #"Betting"]
     p['mechanics'] = mechanic_list
     # game = Game(mechanic_list)
     # agent = CreatorAgent()
@@ -43,20 +45,30 @@ def start_rl(mechanic_list):
 
             # Generate intitial entities
             # state, trajectories = game.generate_entity_states(agent)
-            child_embeddings, child_trajectories, parent_embeddings, parent_trajectories = game_env.generate_entity_states(agent)
+            mechanic_dicts, mechanic_objs = {}, {}
+            if "Square-Grid Movement" in mechanic_list:
+                Square_Class = Square_Grid_Movement_Class()
+                mechanic_dicts["Square-Grid Movement"] = Square_Class.get_mechanic_dict()
+                mechanic_objs["Square-Grid Movement"] = Square_Class
+            if "Deck-of-Cards" in mechanic_list:
+                Deck_Class = Deck_of_Cards_Class() # TODO: FIX dictionary stuff
+                mechanic_dicts["Deck-of-Cards"] = Deck_Class.get_mechanic_dict()
+                mechanic_objs["Deck-of-Cards"] = Deck_Class
+            child_embeddings, child_trajectories, parent_embeddings, parent_trajectories = game_env.generate_entity_states(agent, mechanic_dicts)
 
             # ---------------------------------- ATTENTION FOR ENTITY COMBINATION --------------------------------------
             attention_model = Attention_Model()
             indices_to_combine_child, child_embeddings, child_comb_to_emb_map = do_some_attention(child_embeddings, child_trajectories, attention_model, is_child=True)
-            indices_to_combine_parent, parent_embeddings, parent_comb_to_emb_map = do_some_attention(parent_embeddings, parent_trajectories.tolist(), attention_model, is_child=False)
-
+            indices_to_combine_parent, parent_embeddings, parent_comb_to_emb_map = do_some_attention(parent_embeddings, parent_trajectories, attention_model, is_child=False)
+            # TODO: Look at changing this to one big list ^^
 
             # ---------------------------------------- ENTITY DUPLICATION ----------------------------------------------
             duplicate_model = Duplicate_Entities_Model(mechanic_types)
-            parent_duplicate_combined_dict = duplicate_model.transformer_duplicate(parent_embeddings, parent_trajectories.tolist(), parent_comb_to_emb_map, is_child=False)
+            parent_duplicate_combined_dict = duplicate_model.transformer_duplicate(parent_embeddings, parent_trajectories, parent_comb_to_emb_map, is_child=False)
             child_duplicate_combined_dict = duplicate_model.transformer_duplicate( child_embeddings, child_trajectories, child_comb_to_emb_map, is_child=True )
 
-
+            # ----------------------------------------- ENTITY CREATION ------------------------------------------------
+            entity_obj_list = game_env.create_entity_objects(child_duplicate_combined_dict, child_trajectories, mechanic_objs)
 
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities

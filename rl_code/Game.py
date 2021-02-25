@@ -1,13 +1,18 @@
 import gym
 import numpy as np
-from gym import spaces
+# from gym import spaces
 from rl_code.Agent import RandomAgent, CreatorAgent
 from torch import nn
 import torch
+from mechanics.Entity import Entity
 
 mechanic_types = {
   "Square-Grid Movement" : 1,
-  "Betting"       : 2,
+  "Deck-of-Cards"       : 2,
+}
+num_mechanic_types = {
+  1: "Square-Grid Movement",
+  2: "Deck-of-Cards",
 }
 
 interpret_level = {
@@ -27,7 +32,7 @@ interpret_level = {
 
 
 
-class Game(gym.Env):
+class Game():#gym.Env):
   """Custom Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
@@ -39,14 +44,14 @@ class Game(gym.Env):
     N_DISCRETE_ACTIONS = 0
     self.num_possible_mechanics = 2
     self.max_level = 12
-    self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
+    # self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
     # Example for using image as input:
     HEIGHT = 0
     WIDTH = 0
     N_CHANNELS = 0
     self.max_options = 10
-    self.observation_space = spaces.Box(low=0, high=255, shape=
-                    (HEIGHT, WIDTH, N_CHANNELS), dtype=np.uint8)
+    # self.observation_space = spaces.Box(low=0, high=255, shape=
+    #                 (HEIGHT, WIDTH, N_CHANNELS), dtype=np.uint8)
     self.mechanic_list = mechanic_list
     self.verbose=verbose
 
@@ -69,6 +74,41 @@ class Game(gym.Env):
     return 0.0
   def represent_state(self):
     return self
+
+
+
+  def create_entity_objects(self, duplicate_dict, trajectories, mechanic_objs):
+    print("Top of create entities")
+    for element in duplicate_dict.keys():
+      if element < len(trajectories):           # means that we are referencing the original entities
+        entity = Entity()
+        obj = mechanic_objs[num_mechanic_types[trajectories[element][0][0]]]
+
+      else:                                     # means that are referencing combined entities
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   def generate_entities(self, entity_states):
@@ -104,14 +144,14 @@ class Game(gym.Env):
     return entities
 
 
-  def generate_entity_states(self, agent):
+  def generate_entity_states(self, agent, mechanic_dicts):
     """
     :param agent:
     :return:
     entity_embeddings (N, dim): A tensor of entity embeddings
     grouped_tree_trajectories (N, ?, max_level+1): A list of tensors with tree trajectories that describe how to create the different entities
     """
-    mechanic_dicts = self.get_mechanic_dicts()
+    # mechanic_dicts = self.get_mechanic_dicts()
 
     # We have a list of embeddings that represent the leaves of the tree. This is the current state
     # Are converted to embeddings before they are fed into the transformer
@@ -253,15 +293,16 @@ class Game(gym.Env):
       for iteration in range(1,selection+1):
         self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
 
-  def get_mechanic_dicts(self):
-    dicts = dict()
-    mechanics = self.mechanic_list
-    if "Square-Grid Movement" in mechanics:
-      dicts[mechanic_types["Square-Grid Movement"]] = self.square_dict()
-    if "Betting" in mechanics:
-      dicts[mechanic_types["Betting"]] = self.betting_dict()
-    print("Dictionaries: \n%s" % str(dicts))
-    return dicts
+  # def get_mechanic_dicts(self):
+  #   dicts = dict()
+  #   mechanics = self.mechanic_list
+  #   if "Square-Grid Movement" in mechanics:
+  #     dicts[mechanic_types["Square-Grid Movement"]] = self.square_dict()
+  #   if "Betting" in mechanics:
+  #     dicts[mechanic_types["Betting"]] = self.betting_dict()
+  #   print("Dictionaries: \n%s" % str(dicts))
+  #   return dicts
+
 
   # For these dictionaries, the min is always 1
   def square_dict(self):
