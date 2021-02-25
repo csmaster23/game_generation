@@ -9,19 +9,21 @@ class Square_Grid_Movement_Class(Mechanic):
         if p is None:
             self.p = {"grid_height" : 5,
                       "grid_width" : 5,
-                      "reflect_patterns": True}
-        self.mechanic_type = "Square Grid Movement"
+                      "reflect_patterns": True,
+                      "replace_captured_pieces": False}
+        self.mechanic_type = "Square-Grid Movement"
         self.grid_height = self.p['grid_height']
         self.grid_width = self.p['grid_width']
-        self.parent_entity_names = {1: "square", 2: "reserve"}
+        self.parent_entity_names = {1: "square", 2: "reserve"} # hand, draw_pile, discard_pile, playing_area
         self.child_entity_name = "square_movement_piece"
         self.action_types = {"default": ["remove_captured_piece"],
                              1: "drag_to_capture",
                              2: "hop_to_capture",
                              3: "hop_over_capture",
                              4: "drag",
-                             5: "hop",
-                             6: "replace_captured_piece"}
+                             5: "hop"}
+        if self.p["replace_captured_pieces"]:
+            self.action_types["default"].append("replace_captured_piece")
         self.reflect_patterns = self.p["reflect_patterns"]
 
         # These pattern symbols can be used for all the actions
@@ -29,7 +31,7 @@ class Square_Grid_Movement_Class(Mechanic):
             1: "NW", 2: "N", 3: "NE", 4: "W", 5: "E", 6: "SW", 7: "S", 8: "SE", 9: "*"
         }
         self.pattern_symbols2 = {
-            i: "transfer" for i in range(9)
+            1: "transfer"
         }
         self.all_pattern_symbols = {"remove_captured_piece" : self.pattern_symbols2,
                              "drag_to_capture": self.pattern_symbols1,
@@ -51,7 +53,7 @@ class Square_Grid_Movement_Class(Mechanic):
         sq["num_patterns"] = (1, 4)  # num_patterns
         # Should record which pattern we are looking at
         sq["pattern_length"] = (1, 3)  # pattern_length
-        sq["pattern_symbol"] = (1, max([x for x in self.pattern_symbols.keys() if type(x) is int]))  # pattern_symbol
+        sq["pattern_symbol"] = (1, max([x for x in self.pattern_symbols1.keys() if type(x) is int]))  # pattern_symbol
         sq["num_parent_entity_types"] = 2
         return sq
 
