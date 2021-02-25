@@ -33,10 +33,10 @@ class Deck_of_Cards_Class(Mechanic):
             1: "transfer"
         }
         self.all_pattern_symbols = {
-                                    "move" : self.pattern_symbols2,
-                                     "match": self.pattern_symbols1,
-                                     "reverse_turn": self.pattern_symbols1,
-                                     "increment_draw": self.pattern_symbols1
+                                    "move" : self.default_pattern_symbols,
+                                     "match": self.optional_pattern_symbols,
+                                     "reverse_turn": self.optional_pattern_symbols,
+                                     "increment_draw": self.optional_pattern_symbols
                                     }
 
     def get_mechanic_dict(self):
