@@ -42,7 +42,7 @@ class Square_Grid_Movement_Class(Mechanic):
                              "replace_captured_piece": self.pattern_symbols2}
 
 
-    def square_dict(self):
+    def mechanic_dict(self):
         sq = {}
         # Key[level]            (Min, Max)
         sq["num_groups"] = (1, max([x for x in self.parent_entity_names.keys() if type(x) is int]))  # num_group (how many of that mechanic there is)
