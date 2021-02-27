@@ -58,3 +58,18 @@ class Square_Grid_Movement_Class(Mechanic):
         sq["pattern_symbol"] = (1, max([x for x in self.optional_pattern_symbols.keys() if type(x) is int]))  # pattern_symbol
         sq["num_parent_entity_types"] = len(self.parent_entity_names)
         return sq
+
+    # def square_dict(self):
+    #     sq = {}
+    #     # Key[level]            (Min, Max)
+    #     sq["num_groups"] = (1, 1)  # num_group (how many of that mechanic there is)
+    #     # Should record which group we are on
+    #     sq["num_child_entities"] = (1, 6)  # num child entity types
+    #     # Should record child entity type we are on
+    #     sq["num_action_types"] = (1, 4)  # num_action_types
+    #     sq["num_patterns"] = (1, 2)  # num_patterns
+    #     # Should record which pattern we are looking at
+    #     sq["pattern_length"] = (1, 3)  # pattern_length
+    #     sq["pattern_symbol"] = (1, 9)  # pattern_symbol
+    #     sq["num_parent_entity_types"] = 1
+    #     return sq

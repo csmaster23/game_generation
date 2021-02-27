@@ -79,14 +79,27 @@ class Game():#gym.Env):
 
   def create_entity_objects(self, duplicate_dict, trajectories, mechanic_objs):
     print("Top of create entities")
+    # Adds the trajectory info the entities that originals
+    for key in duplicate_dict.keys():
+      if len(duplicate_dict[key][1]) == 0:
+        duplicate_dict[key][1].append(key)
+
+    all_entities = {}
     for element in duplicate_dict.keys():
-      if element < len(trajectories):           # means that we are referencing the original entities
+      for d in range(duplicate_dict[element][0]):  # number of times to duplicate
         entity = Entity()
-        obj = mechanic_objs[num_mechanic_types[trajectories[element][0][0]]]
+        mechanic_num = trajectories[element][0][0].item()
+        obj = mechanic_objs[mechanic_num]  # this gets the class object
+        for needed_traj in duplicate_dict[element][1]: # references entitiy needed trajectory list
+          # needed traj is a number that can be indexed
+          traj = trajectories[needed_traj]
+          for t in traj:
+            entity = obj.add_to_entity(entity, t)
+        all_entities[entity.id] = entity
 
       else:                                     # means that are referencing combined entities
         pass
-
+    return all_entities
 
 
 
@@ -151,7 +164,7 @@ class Game():#gym.Env):
     entity_embeddings (N, dim): A tensor of entity embeddings
     grouped_tree_trajectories (N, ?, max_level+1): A list of tensors with tree trajectories that describe how to create the different entities
     """
-    # mechanic_dicts = self.get_mechanic_dicts()
+    # two_mechanic_dicts = self.get_mechanic_dicts()
 
     # We have a list of embeddings that represent the leaves of the tree. This is the current state
     # Are converted to embeddings before they are fed into the transformer
@@ -293,15 +306,15 @@ class Game():#gym.Env):
       for iteration in range(1,selection+1):
         self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
 
-  # def get_mechanic_dicts(self):
-  #   dicts = dict()
-  #   mechanics = self.mechanic_list
-  #   if "Square-Grid Movement" in mechanics:
-  #     dicts[mechanic_types["Square-Grid Movement"]] = self.square_dict()
-  #   if "Betting" in mechanics:
-  #     dicts[mechanic_types["Betting"]] = self.betting_dict()
-  #   print("Dictionaries: \n%s" % str(dicts))
-  #   return dicts
+  def get_mechanic_dicts(self):
+    dicts = dict()
+    mechanics = self.mechanic_list
+    if "Square-Grid Movement" in mechanics:
+      dicts[mechanic_types["Square-Grid Movement"]] = self.square_dict()
+    if "Betting" in mechanics:
+      dicts[mechanic_types["Betting"]] = self.betting_dict()
+    print("Dictionaries: \n%s" % str(dicts))
+    return dicts
 
 
   # For these dictionaries, the min is always 1

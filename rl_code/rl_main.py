@@ -48,12 +48,12 @@ def start_rl(mechanic_list):
             mechanic_dicts, mechanic_objs = {}, {}
             if "Square-Grid Movement" in mechanic_list:
                 Square_Class = Square_Grid_Movement_Class()
-                mechanic_dicts["Square-Grid Movement"] = Square_Class.get_mechanic_dict()
-                mechanic_objs["Square-Grid Movement"] = Square_Class
+                mechanic_dicts[1] = Square_Class.get_mechanic_dict() # "Square-Grid Movement"
+                mechanic_objs[1] = Square_Class # "Square-Grid Movement"
             if "Deck-of-Cards" in mechanic_list:
                 Deck_Class = Deck_of_Cards_Class() # TODO: FIX dictionary stuff
-                mechanic_dicts["Deck-of-Cards"] = Deck_Class.get_mechanic_dict()
-                mechanic_objs["Deck-of-Cards"] = Deck_Class
+                mechanic_dicts[2] = Deck_Class.get_mechanic_dict() # "Deck-of-Cards"
+                mechanic_objs[2] = Deck_Class # "Deck-of-Cards"
             child_embeddings, child_trajectories, parent_embeddings, parent_trajectories = game_env.generate_entity_states(agent, mechanic_dicts)
 
             # ---------------------------------- ATTENTION FOR ENTITY COMBINATION --------------------------------------
