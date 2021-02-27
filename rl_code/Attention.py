@@ -2,7 +2,7 @@ import math
 import torch
 import numpy as np
 from functools import reduce
-from rl_code.Multi_Head_Attention import MultiheadAttention as MA
+# from rl_code.Multi_Head_Attention import MultiheadAttention as MA
 
 def get_factors(n):
     return set(reduce(list.__add__,
@@ -13,8 +13,8 @@ class Attention_Model():
         ## Make a 40 and 80 block for two rounds of combinations
         factor = max(get_factors(embedding_size)) # this is the number of heads to use, num_entities must be divisble by num_heads hence we get factors and pick largetst one
         factor_2 = max(get_factors(embedding_size_2))
-        self.m_att = MA(embedding_size, factor) # custom MultiHeadAttention (as code as pytorch just copied into py file)
-        self.m_att_2 = MA(embedding_size_2, factor_2)
+        self.m_att = torch.nn.MultiheadAttention(embedding_size, factor) # custom MultiHeadAttention (as code as pytorch just copied into py file)
+        self.m_att_2 = torch.nn.MultiheadAttention(embedding_size_2, factor_2)
         self.softmax = torch.nn.Softmax(1)
         self.embedding_size = embedding_size
         self.embedding_size_2 = embedding_size_2
