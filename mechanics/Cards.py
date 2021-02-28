@@ -42,8 +42,7 @@ class Deck_of_Cards_Class(Mechanic):
     def get_mechanic_dict(self):
         card = {}
         # Key[level]            (Min, Max)
-        card["num_groups"] = (1, max([x for x in self.parent_entity_names.keys() if
-                                    type(x) is int]))  # num_group (how many of that mechanic there is)
+        card["num_groups"] = (1, 1)  # num_group (how many of that mechanic there is)
         # Should record which group we are on
         card["num_child_entities"] = (1, 6)  # num child entity types
         # Should record child entity type we are on
