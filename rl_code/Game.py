@@ -92,6 +92,8 @@ class Game():#gym.Env):
           # needed traj is a number that can be indexed
           traj = trajectories[needed_traj]
             # this gets the class object
+          if len(traj.shape) == 1:
+            traj = traj.unsqueeze(0)
           for t in traj:
             mechanic_num = t[0].item()
             obj = mechanic_objs[mechanic_num]
