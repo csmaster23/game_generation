@@ -14,7 +14,7 @@ class Attention_Model():
         factor = max(get_factors(embedding_size)) # this is the number of heads to use, num_entities must be divisble by num_heads hence we get factors and pick largetst one
         factor_2 = max(get_factors(embedding_size_2))
         self.m_att = torch.nn.MultiheadAttention(embedding_size, factor) # custom MultiHeadAttention (as code as pytorch just copied into py file)
-        self.m_att_2 = torch.nn.MultiheadAttention(embedding_size_2, factor_2)
+        self.m_att_2 = torch.nn.MultiheadAttention(embedding_size_2, factor_2) # WAS MA OLD
         self.softmax = torch.nn.Softmax(1)
         self.embedding_size = embedding_size
         self.embedding_size_2 = embedding_size_2
@@ -50,12 +50,21 @@ def do_some_attention(embeddings, trajectories, attention_model, is_child=False)
     print("top of do some attention")
     print("Embeddings with Tensor size: %s" % str(embeddings.size()))
     comb_to_emb_map = {}
-    if is_child:
-        entity_group_nums = [traj[0][2].item() for traj in trajectories]
-        entity_mechanic_nums = [traj[0][0].item() for traj in trajectories]
-    else:
-        entity_group_nums = [traj[2] for traj in trajectories]
-        entity_mechanic_nums = [traj[0] for traj in trajectories]
+    entity_group_nums, entity_mechanic_nums = [], []
+    for traj in trajectories:
+        if len(traj.shape) == 1:
+            entity_group_nums.append( traj[2].item() )
+            entity_mechanic_nums.append( traj[0].item() )
+        else:
+            entity_group_nums.append(traj[0][2].item())
+            entity_mechanic_nums.append(traj[0][0].item())
+
+    # if is_child:
+    #     entity_group_nums = [traj[0][2].item() for traj in trajectories]
+    #     entity_mechanic_nums = [traj[0][0].item() for traj in trajectories]
+    # else:
+    #     entity_group_nums = [traj[2] for traj in trajectories]
+    #     entity_mechanic_nums = [traj[0] for traj in trajectories]
     custom_entity_groups = get_custom_entity_groups(entity_group_nums, entity_mechanic_nums)
 
     mask = create_mask(custom_entity_groups)
