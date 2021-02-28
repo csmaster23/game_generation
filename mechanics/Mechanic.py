@@ -79,7 +79,7 @@ class Mechanic():
         detailed_trajectory = {interpret_level[i]: val for i, val in enumerate(tree_trajectory)}
         if detailed_trajectory["selected_parent_entity"].item() == 0:
             # Child entity
-            entity.entity_names.add(self.child_entity_name + str(detailed_trajectory["selected_child_entity"].item()))
+            entity.entity_names.add(self.child_entity_name + "_" + str(detailed_trajectory["selected_child_entity"].item()))
 
             # Add parent name
             # parent_name = self.parent_entity_names[detailed_trajectory["selected_parent_entity"].item()] + str(detailed_trajectory[
@@ -88,20 +88,34 @@ class Mechanic():
 
             # Set up action type
             action_type = self.action_types[detailed_trajectory["selected_action_type"].item()]
-            try:
-                entity.parent_to_actions[parent_name].add(action_type)
-            except KeyError:
-                entity.parent_to_actions[parent_name] = {action_type}
+            # try:
+            #     entity.parent_to_actions[parent_name].add(action_type)
+            # except KeyError:
+            #     entity.parent_to_actions[parent_name] = {action_type}
 
             # Add to pattern
             pattern_symbol = self.all_pattern_symbols[action_type][detailed_trajectory["pattern_symbol"].item()]
             try:
-                self.all_pattern_symbols[action_type][detailed_trajectory["selected_pattern"].item()].append(pattern_symbol)
+                entity.actions_to_patterns[action_type]
             except KeyError:
-                self.all_pattern_symbols[action_type] = {detailed_trajectory["selected_pattern"].item(): [pattern_symbol]}
+                entity.actions_to_patterns[action_type] = dict()
+
+            try:
+                entity.actions_to_patterns[action_type][detailed_trajectory["selected_pattern"].item()]
+            except KeyError:
+                entity.actions_to_patterns[action_type][detailed_trajectory["selected_pattern"].item()] = []
+
+            # try:
+            entity.actions_to_patterns[action_type][detailed_trajectory["selected_pattern"].item()].append(pattern_symbol)
+            # except KeyError:
+            #     entity.actions_to_patterns[action_type] = {detailed_trajectory["selected_pattern"].item(): [pattern_symbol]}
+
+            for idx in self.parent_entity_names:
+                parent_name = self.parent_entity_names[idx]
+                entity.parent_names.add(parent_name + "_" + str(detailed_trajectory["selected_group"].item()))
         else:
             # Add parent name
-            parent_name = self.parent_entity_names[detailed_trajectory["selected_parent_entity"].item()] + str(detailed_trajectory[
+            parent_name = self.parent_entity_names[detailed_trajectory["selected_parent_entity"].item()] + "_" + str(detailed_trajectory[
                 "selected_group"].item())
             entity.entity_names.add(parent_name)
 

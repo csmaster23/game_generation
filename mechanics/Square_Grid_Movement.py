@@ -47,7 +47,7 @@ class Square_Grid_Movement_Class(Mechanic):
     def get_mechanic_dict(self):
         sq = {}
         # Key[level]            (Min, Max)
-        sq["num_groups"] = (1, max([x for x in self.parent_entity_names.keys() if type(x) is int]))  # num_group (how many of that mechanic there is)
+        sq["num_groups"] = (1, 1)  # num_group (how many of that mechanic there is)
         # Should record which group we are on
         sq["num_child_entities"] = (1, 6)  # num child entity types
         # Should record child entity type we are on

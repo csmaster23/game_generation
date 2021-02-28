@@ -88,14 +88,17 @@ class Game():#gym.Env):
     for element in duplicate_dict.keys():
       for d in range(duplicate_dict[element][0]):  # number of times to duplicate
         entity = Entity()
-        mechanic_num = trajectories[element][0][0].item()
-        obj = mechanic_objs[mechanic_num]  # this gets the class object
         for needed_traj in duplicate_dict[element][1]: # references entitiy needed trajectory list
           # needed traj is a number that can be indexed
           traj = trajectories[needed_traj]
+            # this gets the class object
+          if len(traj.shape) == 1:
+            traj = traj.unsqueeze(0)
           for t in traj:
+            mechanic_num = t[0].item()
+            obj = mechanic_objs[mechanic_num]
             entity = obj.add_to_entity(entity, t)
-        all_entities[entity.id] = entity
+        all_entities[entity.id.hex] = entity
 
       else:                                     # means that are referencing combined entities
         pass

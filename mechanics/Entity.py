@@ -31,7 +31,7 @@ class Entity():
         self.p = p
         self.entity_names = set() if entity_names is None else entity_names
         self.parent_names = set() if parent_names is None else parent_names
-        self.parents_to_actions = dict() if parents_to_actions is None else parents_to_actions
+        # self.parents_to_actions = dict() if parents_to_actions is None else parents_to_actions
         self.actions_to_patterns = dict() if actions_to_patterns is None else actions_to_patterns
         self.info = None
         if id is None:

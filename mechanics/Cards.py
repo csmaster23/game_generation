@@ -42,15 +42,14 @@ class Deck_of_Cards_Class(Mechanic):
     def get_mechanic_dict(self):
         card = {}
         # Key[level]            (Min, Max)
-        card["num_groups"] = (1, max([x for x in self.parent_entity_names.keys() if
-                                    type(x) is int]))  # num_group (how many of that mechanic there is)
+        card["num_groups"] = (1, 1)  # num_group (how many of that mechanic there is)
         # Should record which group we are on
         card["num_child_entities"] = (1, 6)  # num child entity types
         # Should record child entity type we are on
         card["num_action_types"] = (1, max([x for x in self.action_types.keys() if type(x) is int]))  # num_action_types
         card["num_patterns"] = (1, 4)  # num_patterns
         # Should record which pattern we are looking at
-        card["pattern_length"] = (1, 3)  # pattern_length
+        card["pattern_length"] = (1, 1)  # pattern_length
         card["pattern_symbol"] = (
         1, max([x for x in self.optional_pattern_symbols.keys() if type(x) is int]))  # pattern_symbol
         card["num_parent_entity_types"] = len(self.parent_entity_names)
