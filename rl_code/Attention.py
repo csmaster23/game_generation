@@ -202,9 +202,16 @@ def get_custom_entity_groups(entity_group_nums, entity_mechanic_nums):
     for i, (mech, group) in enumerate(zip(entity_mechanic_nums, entity_group_nums)):
         tup = (mech, group)
         if tup in existing_tuples:
-            custom_nums.append(len(existing_tuples)) # this will give us a custom group number for each unique mechanic group number pair
+            # custom_nums.append(len(existing_tuples)) # this will give us a custom group number for each unique mechanic group number pair
+            custom_nums.append(index_that_matches(existing_tuples, tup))
         else:
             existing_tuples.append(tup)
             custom_nums.append(len(existing_tuples))
 
     return custom_nums
+
+def index_that_matches(tup_lst, tup):
+    for i, tup_l in enumerate(tup_lst):
+        if tup == tup_l:
+            return i + 1
+    return 1

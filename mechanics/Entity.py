@@ -65,8 +65,8 @@ class Entity():
         print(self.__dict__)
         for key in self.actions_to_patterns.keys():
             print("KEY: %s" % str(key))
-            # if key not in self.card_move_list:
-            #     continue
+            if key not in self.card_move_list:
+                continue
             label_, obj_color, edge_color = self.get_label_and_colors(key)
             for i, move_key in enumerate(self.actions_to_patterns[key].keys()):
                 self.current_piece_position = self.original_piece_position
