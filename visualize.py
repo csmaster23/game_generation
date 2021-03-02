@@ -7,5 +7,5 @@ def plot_child_entities( entities ):
     [print(value.__dict__) for value in entities.values()]
     for entity in child_entities:
         entity.show()
-    sys.exit(0)
+    # sys.exit(0)
     return
