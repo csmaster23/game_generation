@@ -40,3 +40,4 @@ class Entity():
             self.id = id
         self.storage_location = None
         self.my_stored_ids = []
+        self.entity_groups = []
