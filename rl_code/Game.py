@@ -5,6 +5,7 @@ from rl_code.Agent import RandomAgent, CreatorAgent
 from torch import nn
 import torch
 from mechanics.Entity import Entity
+from mechanics.Entity_Group import EntityGroup
 
 mechanic_types = {
   "Square-Grid Movement" : 1,
@@ -55,9 +56,6 @@ class Game():#gym.Env):
     self.mechanic_list = mechanic_list
     self.verbose=verbose
 
-
-
-
   def step(self, action):
       # Execute one time step within the environment
       r = self.simulate()
@@ -103,6 +101,12 @@ class Game():#gym.Env):
       else:                                     # means that are referencing combined entities
         pass
     return all_entities
+
+  def create_entity_groups(self, entity_object_list):
+    entity_group_dict = dict()
+    for entity in entity_object_list:
+      # Create the entity groups
+      EntityGroup()
 
 
 

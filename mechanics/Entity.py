@@ -44,6 +44,7 @@ class Entity():
             self.id = id
         self.storage_location = None
         self.my_stored_ids = []
+<<<<<<< HEAD
         self.grid_wdith = 8 # really makes 5x5 grid
         self.original_piece_position = (3.5, 3.5) # middle of 5x5 grid, xy_coords
         self.current_piece_position = (3.5, 3.5)
@@ -232,3 +233,6 @@ class Entity():
             edge_color = 'none'
         # ------- CAPTURE -------
         return label_, obj_color, edge_color
+=======
+        self.entity_groups = []
+>>>>>>> 25d2135344b54c1252879632effa6f106e2ff32a
