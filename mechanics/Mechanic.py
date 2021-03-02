@@ -120,7 +120,7 @@ class Mechanic():
             entity.entity_names.add(parent_name)
 
             # Add to entity group
-            entity.entity_groups.append((parent_name, self.mechanic_type + "-" + str(detailed_trajectory["selected_group"])))
+            entity.entity_groups.append((parent_name, self.mechanic_type + " " + str(detailed_trajectory["selected_group"])))
 
         return entity
 
