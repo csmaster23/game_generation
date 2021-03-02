@@ -2,6 +2,7 @@ import os
 import torch
 import numpy as np
 from rl_code.Game import Game
+from visualize import plot_child_entities
 from mechanics.Cards import Deck_of_Cards_Class
 from rl_code.Agent import Agent, RandomAgent, CreatorAgent
 from rl_code.Duplicate_Entities import Duplicate_Entities_Model
@@ -73,6 +74,9 @@ def start_rl(mechanic_list):
 
             # ----------------------------------------- ENTITY CREATION ------------------------------------------------
             entity_obj_dict = game_env.create_entity_objects(duplicate_combined_dict, all_trajectories, mechanic_objs)
+
+
+            plot_child_entities(entity_obj_list)
 
             # ----------------------------------------- ENTITY GROUP CREATION ------------------------------------------
             entity_groups = game_env.create_entity_groups(entity_obj_dict)
