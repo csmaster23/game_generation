@@ -46,7 +46,7 @@ class Attention_Model():
         return symmetric_out
 
 def do_some_attention(embeddings, trajectories, attention_model, is_child=False):
-    att_thresh = 0.4
+    att_thresh = 0.3
     print("top of do some attention")
     print("Embeddings with Tensor size: %s" % str(embeddings.size()))
     comb_to_emb_map = {}

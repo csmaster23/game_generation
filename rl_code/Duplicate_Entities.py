@@ -110,7 +110,7 @@ class Duplicate_Entities_Model():
             if i < len(trajectories):                                                   # these are embeddings we have trajectories for
                 if len(trajectories[i].shape) == 1:
                     if trajectories[i][0] == self.mechanic_types['Square-Grid Movement']:
-                        min_max[i] = [(5, 8), []] # the empty list denotes that nothing goes to combine an original entity
+                        min_max[i] = [(2, 4), []] # the empty list denotes that nothing goes to combine an original entity
                     elif trajectories[i][0] == self.mechanic_types['Betting']:
                         min_max[i] = [(2, 4), []]
                     else:
