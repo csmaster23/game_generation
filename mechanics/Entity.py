@@ -60,7 +60,7 @@ class Entity():
         self.entity_groups = []
 
     def show(self):
-        print("Here in show!")
+        print("\nHere in show!")
         # dict_keys(['p', 'entity_names', 'parent_names', 'actions_to_patterns', 'info', 'id', 'storage_location', 'my_stored_ids'])
         print(self.__dict__)
         for key in self.actions_to_patterns.keys():
@@ -68,26 +68,30 @@ class Entity():
             # if key not in self.card_move_list:
             #     continue
             label_, obj_color, edge_color = self.get_label_and_colors(key)
+            if key in self.card_move_list:
+                self.fig, self.ax = self.card_setup()
+            else:
+                self.fig, self.ax = self.get_default_grid(key)
             for i, move_key in enumerate(self.actions_to_patterns[key].keys()):
                 self.current_piece_position = self.original_piece_position
                 print("MOVE KEY: %s" % str(move_key))
                 move_list = self.actions_to_patterns[key][move_key]
                 # move_list = move_list + ['*']
-                if key in self.card_move_list:
-                    self.fig, self.ax = self.card_setup()
-                else:
-                    self.fig, self.ax = self.get_default_grid(key)
+                # if key in self.card_move_list:
+                #     self.fig, self.ax = self.card_setup()
+                # else:
+                #     self.fig, self.ax = self.get_default_grid(key)
                 for i, move_name in enumerate(move_list):
-                    print("MOVE NAME: %s" % str(move_name))
+                    # print("MOVE NAME: %s" % str(move_name))
                     self.add_plot_update_position(move_name, obj_color, edge_color, label_)
 
                 piece = plt.Circle( self.original_piece_position, .3, facecolor='red', edgecolor='red', linewidth=3)
                 self.ax.add_patch(piece)
-                if key in self.card_move_list:
-                    pass
-                else:
-                    plt.legend()
-                plt.show()
+                # if key in self.card_move_list:
+                #     pass
+                # else:
+                #     plt.legend()
+            plt.show()
         return
 
     def update_curr_position(self, x, y):

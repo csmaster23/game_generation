@@ -75,12 +75,10 @@ def start_rl(mechanic_list):
             # ----------------------------------------- ENTITY CREATION ------------------------------------------------
             entity_obj_list = game_env.create_entity_objects(duplicate_combined_dict, all_trajectories, mechanic_objs)
 
-
             plot_child_entities(entity_obj_list)
 
             # ----------------------------------------- ENTITY GROUP CREATION ------------------------------------------
             entity_groups = game_env.get_entity_groups(entity_obj_list)
-
 
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities
