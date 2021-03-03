@@ -73,12 +73,14 @@ def start_rl(mechanic_list):
             # child_duplicate_combined_dict = duplicate_model.transformer_duplicate( child_embeddings, child_trajectories, child_comb_to_emb_map, is_child=True )
 
             # ----------------------------------------- ENTITY CREATION ------------------------------------------------
-            entity_obj_list = game_env.create_entity_objects(duplicate_combined_dict, all_trajectories, mechanic_objs)
+            entity_obj_dict = game_env.create_entity_objects(duplicate_combined_dict, all_trajectories, mechanic_objs)
 
             plot_child_entities(entity_obj_list)
 
             # ----------------------------------------- ENTITY GROUP CREATION ------------------------------------------
-            entity_groups = game_env.get_entity_groups(entity_obj_list)
+
+            entity_groups = game_env.create_entity_groups(entity_obj_dict)
+            entity_groups['Square-Grid Movement 1'].visualize(entity_obj_dict)
 
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities

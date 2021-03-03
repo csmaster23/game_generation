@@ -96,17 +96,31 @@ class Game():#gym.Env):
             mechanic_num = t[0].item()
             obj = mechanic_objs[mechanic_num]
             entity = obj.add_to_entity(entity, t)
-        all_entities[entity.id.hex] = entity
+        all_entities[entity.id] = entity
 
       else:                                     # means that are referencing combined entities
         pass
+
     return all_entities
 
-  def create_entity_groups(self, entity_object_list):
+  def create_entity_groups(self, entity_object_dict):
     entity_group_dict = dict()
-    for entity in entity_object_list:
-      # Create the entity groups
-      EntityGroup()
+    for entity_id in entity_object_dict:
+      entity = entity_object_dict[entity_id]
+      for group in entity.entity_groups:
+        # Create the entity groups
+        try:
+          entity_group_obj = entity_group_dict[group[1]]
+        except KeyError:
+          entity_group_obj = EntityGroup(group[1])
+          entity_group_dict[group[1]] = entity_group_obj
+        entity_group_obj.add_entity_to_group(entity)
+
+    for group_name in entity_group_dict:
+      entity_group_dict[group_name].assign_entity_indices()
+    return entity_group_dict
+
+
 
 
 
