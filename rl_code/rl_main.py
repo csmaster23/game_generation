@@ -8,6 +8,7 @@ from rl_code.Agent import Agent, RandomAgent, CreatorAgent
 from rl_code.Duplicate_Entities import Duplicate_Entities_Model
 from rl_code.Attention import do_some_attention, Attention_Model
 from mechanics.Square_Grid_Movement import Square_Grid_Movement_Class
+from rl_code.Initialize_Entities import initialize_some_entities, Initializer_Model
 
 mechanic_types = {
   "Square-Grid Movement" : 1,
@@ -75,12 +76,16 @@ def start_rl(mechanic_list):
             # ----------------------------------------- ENTITY CREATION ------------------------------------------------
             entity_obj_dict = game_env.create_entity_objects(duplicate_combined_dict, all_trajectories, mechanic_objs)
 
-            plot_child_entities(entity_obj_dict)
+            # plot_child_entities(entity_obj_dict)
 
             # ----------------------------------------- ENTITY GROUP CREATION ------------------------------------------
 
             entity_groups = game_env.create_entity_groups(entity_obj_dict)
-            entity_groups['Square-Grid Movement 1'].visualize(entity_obj_dict)
+            # entity_groups['Square-Grid Movement 1'].visualize(entity_obj_dict)
+
+            # ------------------------------------- ENTITY PLACE INITIALIZATION ----------------------------------------
+            initializer_model = Initializer_Model()
+            entity_obj_dict = initialize_some_entities(entity_obj_dict, initializer_model, entity_groups)
 
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities
