@@ -69,18 +69,21 @@ def start_rl(mechanic_list):
             # ---------------------------------------- ENTITY DUPLICATION ----------------------------------------------
             duplicate_model = Duplicate_Entities_Model(mechanic_types)
             duplicate_combined_dict = duplicate_model.transformer_duplicate(new_embeddings, all_trajectories, comb_to_emb_map)
+
             # parent_duplicate_combined_dict = duplicate_model.transformer_duplicate(parent_embeddings, parent_trajectories, parent_comb_to_emb_map, is_child=False)
             # child_duplicate_combined_dict = duplicate_model.transformer_duplicate( child_embeddings, child_trajectories, child_comb_to_emb_map, is_child=True )
 
             # ----------------------------------------- ENTITY CREATION ------------------------------------------------
             entity_obj_dict = game_env.create_entity_objects(duplicate_combined_dict, all_trajectories, mechanic_objs)
+            # FIXME Add something that can rearrange the order of the entities
 
-            plot_child_entities(entity_obj_dict)
+            # plot_child_entities(entity_obj_dict)
 
             # ----------------------------------------- ENTITY GROUP CREATION ------------------------------------------
 
-            entity_groups = game_env.create_entity_groups(entity_obj_dict)
-            entity_groups['Square-Grid Movement 1'].visualize(entity_obj_dict)
+            entity_groups = game_env.create_entity_groups(entity_obj_dict, mechanic_objs, mechanic_types)
+            # entity_groups['Square-Grid Movement 1'].visualize(entity_obj_dict)
+
 
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities
