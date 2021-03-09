@@ -80,7 +80,7 @@ def start_rl(mechanic_list):
 
             # ----------------------------------------- ENTITY GROUP CREATION ------------------------------------------
 
-            entity_groups = game_env.create_entity_groups(entity_obj_dict)
+            entity_groups = game_env.create_entity_groups(entity_obj_dict, mechanic_objs, mechanic_types)
             # entity_groups['Square-Grid Movement 1'].visualize(entity_obj_dict)
 
             # ------------------------------------- ENTITY PLACE INITIALIZATION ----------------------------------------
