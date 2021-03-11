@@ -25,7 +25,7 @@ class Square_Grid_Movement_Class(Mechanic):
                              5: "hop"}
 
         self.parent_entities_to_action_types = {
-            "square" : ['hop', 'drag', 'drag_to_capture', 'hop_to_capture', 'hop_over_capture', 'remove_captured_piece'],
+            "square" : ['drag', 'drag_to_capture', 'remove_captured_piece'],
             "reserve" : ['replace_captured_piece']
         }
 
@@ -33,7 +33,7 @@ class Square_Grid_Movement_Class(Mechanic):
 
         # These pattern symbols can be used for all the actions
         self.optional_pattern_symbols = {
-            1: "NW", 2: "N", 3: "NE", 4: "W", 5: "E", 6: "SW", 7: "S", 8: "SE", 9: "*"
+            1: "NW", 2: "N", 3: "NE", 4: "W", 5: "E", 6: "SW", 7: "S", 8: "SE"
         }
         self.default_pattern_symbols = {
             1: "transfer"
@@ -113,12 +113,12 @@ class Square_Grid_Movement_Class(Mechanic):
         # Key[level]            (Min, Max)
         sq["num_groups"] = (1, 1)  # num_group (how many of that mechanic there is)
         # Should record which group we are on
-        sq["num_child_entities"] = (1, 6)  # num child entity types
+        sq["num_child_entities"] = (3, 4)  # num child entity types
         # Should record child entity type we are on
         sq["num_action_types"] = (1, max([x for x in self.action_types.keys() if type(x) is int]))  # num_action_types
         sq["num_patterns"] = (1, 4)  # num_patterns
         # Should record which pattern we are looking at
-        sq["pattern_length"] = (1, 3)  # pattern_length
+        sq["pattern_length"] = (1, 1)  # pattern_length
         sq["pattern_symbol"] = (1, max([x for x in self.optional_pattern_symbols.keys() if type(x) is int]))  # pattern_symbol
         sq["num_parent_entity_types"] = len(self.parent_entity_names)
         return sq
