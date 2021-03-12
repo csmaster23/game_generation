@@ -77,6 +77,7 @@ class Game():#gym.Env):
 
   def create_entity_objects(self, duplicate_dict, trajectories, mechanic_objs):
     print("Top of create entities")
+    # TODO: Need to add emebedding values to the entity objects
     # Adds the trajectory info the entities that originals
     for key in duplicate_dict.keys():
       if len(duplicate_dict[key][1]) == 0:

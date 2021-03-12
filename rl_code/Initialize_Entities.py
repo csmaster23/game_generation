@@ -44,7 +44,7 @@ class Initializer_Model():
         symmetric_out = (soft_dot.T + soft_dot) / 2
         return symmetric_out
 
-def initialize_some_entities(entity_dict, initializer_model, entity_groups):
+def initialize_some_entities(entity_dict, initializer_model, entity_groups, duplicated_embeddings, duplicate_combined_dict):
     att_thresh = 0.3
     print("\n--- Top of Initialize Entity Positions in Game.py ---")
     print("Entity obj dict len: %s" % str(len(entity_dict.keys())))
@@ -56,7 +56,12 @@ def initialize_some_entities(entity_dict, initializer_model, entity_groups):
             p_count += 1
         else:
             c_count += 1
+    counter_ = 0
+    for i, key in enumerate(duplicate_combined_dict):
+        dup_num = duplicate_combined_dict[key][0]  # gets the duplication number for this embedding
+        for d in range(dup_num):
 
+            counter_ += 1
 
 
 
