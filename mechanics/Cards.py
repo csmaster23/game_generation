@@ -8,7 +8,7 @@ class Deck_of_Cards_Class(Mechanic):
         super().__init__(p)
         if p is None:
             self.p = {"num_cards" : 52,
-                      "parent_entity_names": ["draw", "discard", "playing_area", "hand"],
+                      "parent_entity_names": ["draw", "discard", "hand"],
                       "default_actions": ["move"],
                       "reflect_patterns": False,
                       "draw_discard": True,
@@ -19,24 +19,19 @@ class Deck_of_Cards_Class(Mechanic):
         self.child_entity_name = "card"
         self.action_types = {
                             "default": self.p['default_actions'],
-                             1: "match",
-                             2: "reverse_turn",
-                             3: "increment_draw"
+                             1: "card_info"
                              }
 
         # These pattern symbols can be used for all the actions
         self.optional_pattern_symbols = {
-            1: "black", 2: "red", 3: "blue", 4: "green", 5: "1", 6: "2", 7: "3", 8: "4", 9: "5", 10: "6", 11: "7",
-            12: "8", 13: "9", 14: "10", 15: "11", 16: "12", 17: "13"
+            1: "black", 2: "red", 3: "blue", 4: "green", 5: "yellow"
         }
         self.default_pattern_symbols = {
-            1: "transfer"
+            1: "move"
         }
         self.all_pattern_symbols = {
                                     "move" : self.default_pattern_symbols,
-                                     "match": self.optional_pattern_symbols,
-                                     "reverse_turn": self.optional_pattern_symbols,
-                                     "increment_draw": self.optional_pattern_symbols
+                                    "card_info" : self.optional_pattern_symbols
                                     }
 
     def get_mechanic_dict(self):
@@ -44,12 +39,12 @@ class Deck_of_Cards_Class(Mechanic):
         # Key[level]            (Min, Max)
         card["num_groups"] = (1, 1)  # num_group (how many of that mechanic there is)
         # Should record which group we are on
-        card["num_child_entities"] = (1, 6)  # num child entity types
+        card["num_child_entities"] = (5, 5)  # num child entity types
         # Should record child entity type we are on
-        card["num_action_types"] = (1, max([x for x in self.action_types.keys() if type(x) is int]))  # num_action_types
-        card["num_patterns"] = (1, 4)  # num_patterns
+        card["num_action_types"] = (1, 1)  # num_action_types
+        card["num_patterns"] = (1, 1)  # num_patterns
         # Should record which pattern we are looking at
-        card["pattern_length"] = (1, 2)  # pattern_length
+        card["pattern_length"] = (1, 1)  # pattern_length
         card["pattern_symbol"] = (
         1, max([x for x in self.optional_pattern_symbols.keys() if type(x) is int]))  # pattern_symbol
         card["num_parent_entity_types"] = len(self.parent_entity_names)

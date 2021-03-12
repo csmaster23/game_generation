@@ -23,6 +23,8 @@ class EntityGroup():
 		self.name = name
 		self.parents_to_ids = dict()
 		self.id_to_idx = dict()
+		self.idx_to_id = dict()
+		self.id_to_parent_name = dict()
 	def add_entity_to_group(self, entity):
 		for group_tuple in entity.entity_groups:
 			parent_name = group_tuple[0]
@@ -37,7 +39,21 @@ class EntityGroup():
 		for parent_name in self.parents_to_ids.keys():
 			for entity_id in self.parents_to_ids[parent_name]:
 				self.id_to_idx[entity_id] = cur_idx
+				self.idx_to_id[cur_idx] = entity_id
+				self.id_to_parent_name[entity_id] = parent_name
 				cur_idx += 1
+
+	def create_adjacency_matrices(self, mechanic_obj):
+		all_indices = np.arange(len(self.id_to_idx))
+		adj_matrices = dict()
+		for parent_name in self.parents_to_ids:
+			cur_indices = []
+			for entity_id in self.parents_to_ids[parent_name]:
+				cur_indices.append(self.id_to_idx[entity_id])
+			parent_adj_matrices = mechanic_obj.create_adjacency_matrices(all_indices, cur_indices, parent_name)
+			adj_matrices[parent_name] = parent_adj_matrices
+
+
 
 	def get_cmap(self, n, name='viridis'):
 		'''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct

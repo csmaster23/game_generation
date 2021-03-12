@@ -104,7 +104,7 @@ class Game():#gym.Env):
 
     return all_entities
 
-  def create_entity_groups(self, entity_object_dict):
+  def create_entity_groups(self, entity_object_dict, mechanic_objs, mechanic_types):
     entity_group_dict = dict()
     for entity_id in entity_object_dict:
       entity = entity_object_dict[entity_id]
@@ -118,7 +118,14 @@ class Game():#gym.Env):
         entity_group_obj.add_entity_to_group(entity)
 
     for group_name in entity_group_dict:
+      for mechanic_type in mechanic_types:
+        if mechanic_type in group_name:
+          mechanic_num = mechanic_types[mechanic_type]
+          mechanic_obj = mechanic_objs[mechanic_num]
+          break
       entity_group_dict[group_name].assign_entity_indices()
+      entity_group_dict[group_name].create_adjacency_matrices(mechanic_obj)
+
     return entity_group_dict
 
 

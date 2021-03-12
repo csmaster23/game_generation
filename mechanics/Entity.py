@@ -55,8 +55,8 @@ class Entity():
         self.reverse_color = 'darkorange'
         self.match_color = 'darkblue'
         self.increment_color = 'darkgreen'
-        self.card_move_list = ["reverse_turn", "match", "increment_draw"]
         self.embedding = None
+
         self.entity_groups = []
 
     def show(self):
