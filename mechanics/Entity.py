@@ -56,8 +56,18 @@ class Entity():
         self.match_color = 'darkblue'
         self.increment_color = 'darkgreen'
         self.embedding = None
+        self.parent_order = None
 
         self.entity_groups = []
+    def __str__(self):
+        builder = ''
+        for key in self.__dict__.keys():
+            if key == 'embedding':
+                value = self.__dict__[key].shape
+            else:
+                value = self.__dict__[key]
+            builder += "Key: " + key + " Value: " + str(value) + "\n"
+        return builder
 
     def show(self):
         print("\nHere in show!")
@@ -239,3 +249,11 @@ class Entity():
         # ------- CAPTURE -------
         return label_, obj_color, edge_color
 
+
+
+    # setters
+    def set_embedding(self, embedding):
+        self.embedding = embedding
+    # getters
+    def get_embedding(self):
+        return self.embedding

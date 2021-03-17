@@ -75,7 +75,7 @@ class Game():#gym.Env):
 
 
 
-  def create_entity_objects(self, duplicate_dict, trajectories, mechanic_objs):
+  def create_entity_objects(self, duplicate_dict, trajectories, mechanic_objs, embeddings):
     print("Top of create entities")
     # TODO: Need to add emebedding values to the entity objects
     # Adds the trajectory info the entities that originals
@@ -85,8 +85,10 @@ class Game():#gym.Env):
 
     all_entities = {}
     for element in duplicate_dict.keys():
+      embedding = embeddings[element] # grabs the corresponding embedding for this given entity
       for d in range(duplicate_dict[element][0]):  # number of times to duplicate
         entity = Entity()
+        entity.set_embedding(embedding.clone())
         for needed_traj in duplicate_dict[element][1]: # references entitiy needed trajectory list
           # needed traj is a number that can be indexed
           traj = trajectories[needed_traj]
@@ -124,7 +126,7 @@ class Game():#gym.Env):
           mechanic_obj = mechanic_objs[mechanic_num]
           break
       entity_group_dict[group_name].assign_entity_indices()
-      entity_group_dict[group_name].create_adjacency_matrices(mechanic_obj)
+      # entity_group_dict[group_name].create_adjacency_matrices(mechanic_obj)
 
     return entity_group_dict
 

@@ -163,9 +163,16 @@ class Duplicate_Entities_Model():
 
     def get_mask(self, N ): # N in comes in as a tuple of min, max
         full_zeros = torch.zeros((self.embedding_size,))
-        for i in range(full_zeros.shape[0]):
-            if i >= N[1] or i < N[0]:
-                full_zeros[i] = -math.inf
+        if N[0] == N[1]: # meaning min is equal to max meaning we constrain model to only choose one num
+            for i in range(full_zeros.shape[0]):
+                if i == N[0]:
+                    pass
+                else:
+                    full_zeros[i] = -math.inf
+        else:
+            for i in range(full_zeros.shape[0]):
+                if i >= N[1] or i < N[0]:
+                    full_zeros[i] = -math.inf
         return full_zeros
 
     # function to return key for any value

@@ -8,64 +8,151 @@ def get_factors(n):
     return set(reduce(list.__add__,([i, n//i] for i in range(1, int(n**0.5) + 1) if n % i == 0)))
 
 class Initializer_Model():
-    def __init__(self, embedding_size=60, embedding_size_2=120):
+    def __init__(self, embedding_size=240):
         ## Make a 40 and 80 block for two rounds of combinations
         factor = max(get_factors(embedding_size)) # this is the number of heads to use, num_entities must be divisble by num_heads hence we get factors and pick largetst one
-        factor_2 = max(get_factors(embedding_size_2))
         self.m_att = torch.nn.MultiheadAttention(embedding_size, factor)
-        self.m_att_2 = torch.nn.MultiheadAttention(embedding_size_2, factor_2)
-        self.softmax = torch.nn.Softmax(1)
+        self.softmax = torch.nn.Softmax(0)
         self.embedding_size = embedding_size
-        self.embedding_size_2 = embedding_size_2
 
 
-    def find_initials(self, embeddings, mask):
+    def find_initials(self, embeddings):#, mask):
         embeddings = embeddings.unsqueeze(0)
-        print("\n--- top of find attention ---")
+        print("\n--- top of initialize attention ---")
         print("Embedding size: %s" % str(embeddings.size()))
-        if embeddings.shape[-1] == self.embedding_size:
-            att_2, weights_2 = self.m_att(embeddings, embeddings, embeddings)
-        else:
-            att_2, weights_2 = self.m_att_2(embeddings, embeddings, embeddings)
 
+        att_2, weights_2 = self.m_att(embeddings, embeddings, embeddings)
         att_2 = att_2.squeeze(0)
         dotted = torch.mm(att_2, att_2.T)
+        summed = torch.sum(dotted, dim=1)
 
-        # Here we mask out entities so they can't be combined with entities from their same mechanic
-        masked = dotted + mask
+        # masked = dotted + mask
 
         # Soft-max the result so can compare to a threshold between 0 and 1
-        soft_dot = self.softmax(masked)
-        for i, row in enumerate(soft_dot):
-            if all(torch.isnan(row)):
-                soft_dot[i] = torch.zeros( row.shape )
+        soft_dot = self.softmax(summed)
+        # for i, row in enumerate(soft_dot):
+        if all(torch.isnan(soft_dot)):
+            soft_dot = torch.zeros( soft_dot.shape )
 
         # Here we make the output matrix symmetric before we find the entities that meet the threshold to be combined
-        symmetric_out = (soft_dot.T + soft_dot) / 2
-        return symmetric_out
+        # symmetric_out = (soft_dot.T + soft_dot) / 2
+        return soft_dot
 
 def initialize_some_entities(entity_dict, initializer_model, entity_groups, duplicated_embeddings, duplicate_combined_dict):
     att_thresh = 0.3
     print("\n--- Top of Initialize Entity Positions in Game.py ---")
     print("Entity obj dict len: %s" % str(len(entity_dict.keys())))
-    p_count, c_count = 0,0
-    for key in entity_dict.keys():
-        print("\nKey: %s" % str(key))
-        print("Value: %s" % str(entity_dict[key].__dict__))
-        if len(entity_dict[key].parent_names) == 0:
-            p_count += 1
+    parent_keys, parent_embeds, child_keys, child_embeds = [], [], [], []
+    all_keys = list(entity_dict.keys())
+    for key in all_keys:
+        entity = entity_dict[key]
+        print(str(entity))
+        if len(entity.parent_names) == 0:
+            # this code below has us only order the square parents not the card parents
+            for ent_name in entity.entity_names:
+                if 'square' in ent_name:
+                    parent_keys.append(key)
+                    parent_embeds.append(entity.get_embedding())
+                    break
         else:
-            c_count += 1
-    counter_ = 0
-    for i, key in enumerate(duplicate_combined_dict):
-        dup_num = duplicate_combined_dict[key][0]  # gets the duplication number for this embedding
-        for d in range(dup_num):
+            child_keys.append(key)
+            child_embeds.append(entity.get_embedding())
+    # the 4 lists are now ordered and match up directly
+    parent_tensors = torch.stack(parent_embeds)
+    child_tensors = torch.stack(child_embeds)
 
-            counter_ += 1
+    parent_out = initializer_model.find_initials(parent_tensors)
 
+    # place the parents in correct order and give them a parent order
+    sq_p_keys = []
+    for p_key in parent_keys:
+        highest_idx = torch.argmax(parent_out).item()
+        entity_dict[p_key].parent_order = highest_idx
+        entity_dict[p_key].storage_location = highest_idx
+        parent_out[highest_idx] = -math.inf
+        for ent_name in entity_dict[p_key].entity_names:
+            if 'square' in ent_name:
+                sq_p_keys.append(p_key)
+                break
 
+    # handle child squares first
+    sq_c_keys = []
+    for c_key in child_keys:
+        for ent_name in entity_dict[c_key].entity_names:
+            if "square" in ent_name:
+                print(entity_dict[c_key].entity_names)
+                sq_c_keys.append(c_key)
+                break
+
+    # split sq_c pieces evenly
+    player_1, player_2, embeds = [], [], []
+    i = 0
+    while (i < len(sq_c_keys)):
+        player_1.append(sq_c_keys[i])
+        embeds.append( entity_dict[sq_c_keys[i]].get_embedding())
+        player_2.append(sq_c_keys[i+1])
+        i += 2
+
+    # do attention on the player pieces
+    stacked_embeds = torch.stack(embeds)
+    child_sq_out = initializer_model.find_initials(stacked_embeds)
+
+    # get the new order for the child pieces
+    new_p1_keys, new_p2_keys = [], []
+    for _ in player_1:
+        highest_idx = torch.argmax(child_sq_out).item()
+        child_sq_out[highest_idx] = -math.inf
+        new_p1_keys.append(player_1[highest_idx])
+        new_p2_keys.append(player_2[highest_idx])
+
+    # place the player 1 child entities in the first few parent entities
+    for i, p1_k in enumerate(new_p1_keys):
+        parent_id = None
+        for key in all_keys:
+            if entity_dict[key].parent_order == i: # meaning the parent we want
+                entity_dict[key].my_stored_ids.append(p1_k)
+                parent_id = key
+                break
+        entity_dict[p1_k].storage_location = parent_id
+
+    # place the player 2 child entities in the last few parent entities
+    for i, p2_k in enumerate(new_p2_keys):
+        sq_parents_num = len(parent_keys) - 1
+        parent_id = None
+        for key in all_keys:
+            if entity_dict[key].parent_order == (sq_parents_num-i):  # meaning the parent we want
+                entity_dict[key].my_stored_ids.append(p2_k)
+                parent_id = key
+                break
+        entity_dict[p2_k].storage_location = parent_id
+
+    # place the cards in the draw pile
+    more_parents = len(parent_keys)
+    all_unknown_children_keys = []
+    draw_pile_key = None
+    for a in all_keys:
+        # skip entities that already have a storage location which will be set above for the squares
+        if entity_dict[a].storage_location is None: # no location has been set for them
+            if len(entity_dict[a].parent_names) == 0: # meaning a parent that has no location
+                entity_dict[a].storage_location = more_parents
+                more_parents += 1
+                for ent in entity_dict[a].entity_names:
+                    if 'draw' in ent:
+                        draw_pile_key = a
+            else: # meaning children who have no location
+                all_unknown_children_keys.append(a)
+
+    # loop through unknown children and place them in a draw pile
+    for c_k in all_unknown_children_keys:
+        entity_dict[draw_pile_key].my_stored_ids.append(c_k)
+        entity_dict[c_k].storage_location = draw_pile_key
 
     return entity_dict
+
+
+
+
+
 
 
 def create_masks(entity_dict):
