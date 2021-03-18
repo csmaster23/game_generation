@@ -121,6 +121,9 @@ class Square_Grid_Movement_Class(Mechanic):
         sq["pattern_length"] = (1, 1)  # pattern_length
         sq["pattern_symbol"] = (1, max([x for x in self.optional_pattern_symbols.keys() if type(x) is int]))  # pattern_symbol
         sq["num_parent_entity_types"] = len(self.parent_entity_names)
+
+        sq["parent_dup"] = (3, 3) # range to duplicate parent entities in
+        sq["child_dup"] = (2, 2) # range to duplicate children entities in
         return sq
 
     # def square_dict(self):

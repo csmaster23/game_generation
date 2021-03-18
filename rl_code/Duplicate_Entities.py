@@ -2,8 +2,9 @@ import math
 import torch
 
 class Duplicate_Entities_Model():
-    def __init__(self, mechanic_types, embedding_size=240, layer_embedding_size=10, num_layers=24):
+    def __init__(self, mechanic_types, mechanic_dicts, embedding_size=240, layer_embedding_size=10, num_layers=24):
         self.mechanic_types = mechanic_types
+        self.mechanic_dicts = mechanic_dicts
         self.parent_min_max, self.child_min_max = None, None
         self.embedding_size = embedding_size
 
@@ -109,19 +110,24 @@ class Duplicate_Entities_Model():
         for i, emb in enumerate(embeddings):
             if i < len(trajectories):                                                   # these are embeddings we have trajectories for
                 if len(trajectories[i].shape) == 1:
-                    if trajectories[i][0] == self.mechanic_types['Square-Grid Movement']:
-                        min_max[i] = [(5, 8), []] # the empty list denotes that nothing goes to combine an original entity
-                    elif trajectories[i][0] == self.mechanic_types['Betting']:
-                        min_max[i] = [(2, 4), []]
-                    else:
-                        min_max[i] = [(1, 1), []] # idk what this would be but it's here
+                    # trajectories[i][0[ returns 1 or 2 depending on which mechanic it is
+                    mechanic_num = trajectories[i][0].item()
+                    min_max[i] = [self.mechanic_dicts[mechanic_num]["parent_dup"], []]
+                    # if trajectories[i][0] == self.mechanic_types['Square-Grid Movement']:
+                    #     min_max[i] = [(5, 8), []] # the empty list denotes that nothing goes to combine an original entity
+                    # elif trajectories[i][0] == self.mechanic_types['Betting']:
+                    #     min_max[i] = [(2, 4), []]
+                    # else:
+                    #     min_max[i] = [(1, 1), []] # idk what this would be but it's here
                 else:
-                    if trajectories[i][0][0] == self.mechanic_types['Square-Grid Movement']:
-                        min_max[i] = [(3, 6), []]  # the empty list denotes that nothing goes to combine an original entity
-                    elif trajectories[i][0][0] == self.mechanic_types['Betting']:
-                        min_max[i] = [(2, 4), []]
-                    else:
-                        min_max[i] = [(1, 1), []]  # idk what this would be but it's here
+                    mechanic_num = trajectories[i][0][0].item()
+                    min_max[i] = [self.mechanic_dicts[mechanic_num]["child_dup"], []]
+                    # if trajectories[i][0][0] == self.mechanic_types['Square-Grid Movement']:
+                    #     min_max[i] = [(3, 6), []]  # the empty list denotes that nothing goes to combine an original entity
+                    # elif trajectories[i][0][0] == self.mechanic_types['Betting']:
+                    #     min_max[i] = [(2, 4), []]
+                    # else:
+                    #     min_max[i] = [(1, 1), []]  # idk what this would be but it's here
             else:                                                                       # embeddings that we just created through combinations that we have no trajectories for
                 pass
         return min_max
@@ -157,9 +163,16 @@ class Duplicate_Entities_Model():
 
     def get_mask(self, N ): # N in comes in as a tuple of min, max
         full_zeros = torch.zeros((self.embedding_size,))
-        for i in range(full_zeros.shape[0]):
-            if i >= N[1] or i < N[0]:
-                full_zeros[i] = -math.inf
+        if N[0] == N[1]: # meaning min is equal to max meaning we constrain model to only choose one num
+            for i in range(full_zeros.shape[0]):
+                if i == N[0]:
+                    pass
+                else:
+                    full_zeros[i] = -math.inf
+        else:
+            for i in range(full_zeros.shape[0]):
+                if i >= N[1] or i < N[0]:
+                    full_zeros[i] = -math.inf
         return full_zeros
 
     # function to return key for any value

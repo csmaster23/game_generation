@@ -68,13 +68,14 @@ def start_rl(mechanic_list):
             # indices_to_combine_parent, parent_embeddings, parent_comb_to_emb_map = do_some_attention(parent_embeddings, parent_trajectories, attention_model, is_child=False)
 
             # ---------------------------------------- ENTITY DUPLICATION ----------------------------------------------
-            duplicate_model = Duplicate_Entities_Model(mechanic_types)
+            duplicate_model = Duplicate_Entities_Model(mechanic_types, mechanic_dicts)
             duplicate_combined_dict = duplicate_model.transformer_duplicate(new_embeddings, all_trajectories, comb_to_emb_map)
+            duplicated_embeddings = duplicate_embeddings( new_embeddings, duplicate_combined_dict )
             # parent_duplicate_combined_dict = duplicate_model.transformer_duplicate(parent_embeddings, parent_trajectories, parent_comb_to_emb_map, is_child=False)
             # child_duplicate_combined_dict = duplicate_model.transformer_duplicate( child_embeddings, child_trajectories, child_comb_to_emb_map, is_child=True )
 
             # ----------------------------------------- ENTITY CREATION ------------------------------------------------
-            entity_obj_dict = game_env.create_entity_objects(duplicate_combined_dict, all_trajectories, mechanic_objs)
+            entity_obj_dict = game_env.create_entity_objects(duplicate_combined_dict, all_trajectories, mechanic_objs, new_embeddings)
 
             # plot_child_entities(entity_obj_dict)
 
@@ -85,7 +86,7 @@ def start_rl(mechanic_list):
 
             # ------------------------------------- ENTITY PLACE INITIALIZATION ----------------------------------------
             initializer_model = Initializer_Model()
-            entity_obj_dict = initialize_some_entities(entity_obj_dict, initializer_model, entity_groups)
+            entity_obj_dict = initialize_some_entities(entity_obj_dict, initializer_model, entity_groups, duplicated_embeddings, duplicate_combined_dict)
 
             # entity_list = game_env.generate_entities(state, trajectories)
             # Combine entities
@@ -110,6 +111,15 @@ def start_rl(mechanic_list):
         game_env.render()
 
     return game_env
+
+def duplicate_embeddings( embeddings, duplicate_combined_dict ):
+    duped_embeddings = []
+    for i, key in enumerate(duplicate_combined_dict):
+        dup_num = duplicate_combined_dict[key][0] # gets the duplication number for this embedding
+        embedding = embeddings[i]
+        for d in range(dup_num):
+            duped_embeddings.append(embedding.clone())
+    return torch.stack(duped_embeddings)
 
 
 def init_agent(p):

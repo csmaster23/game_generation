@@ -48,6 +48,8 @@ class Deck_of_Cards_Class(Mechanic):
         card["pattern_symbol"] = (
         1, max([x for x in self.optional_pattern_symbols.keys() if type(x) is int]))  # pattern_symbol
         card["num_parent_entity_types"] = len(self.parent_entity_names)
+        card["parent_dup"] = (3, 3)  # range to duplicate parent entities in
+        card["child_dup"] = (8, 10)  # range to duplicate children entities in
         return card
 
     interpret_level = {
