@@ -43,6 +43,8 @@ class Duplicate_Entities_Model():
                 if trajectories[i][0] == self.mechanic_types['Square-Grid Movement'] and first: # first means square piece
                     chosen_num = chosen_num ** 2
                     first = False
+                elif trajectories[i][0] == self.mechanic_types['Square-Grid Movement'] and not first:
+                    chosen_num = 1
             ## SQUARE IT BRUH
             chosed.append(chosen_num)
         print("Chosed: %s" % str(chosed))

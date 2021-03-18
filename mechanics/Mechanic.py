@@ -113,6 +113,11 @@ class Mechanic():
             for idx in self.parent_entity_names:
                 parent_name = self.parent_entity_names[idx]
                 entity.parent_names.add(parent_name + "_" + str(detailed_trajectory["selected_group"]))
+
+            # Add default actions if they do not already exist
+            if not entity.defaults_added:
+                for action_type in self.action_types["default"]:
+                    entity.actions_to_patterns[action_type] = {key: [self.all_pattern_symbols[action_type][key]] for key in self.all_pattern_symbols[action_type]}
         else:
             # Add parent name
             parent_name = self.parent_entity_names[detailed_trajectory["selected_parent_entity"]] + "_" + str(detailed_trajectory[

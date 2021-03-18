@@ -39,7 +39,7 @@ class Deck_of_Cards_Class(Mechanic):
         # Key[level]            (Min, Max)
         card["num_groups"] = (1, 1)  # num_group (how many of that mechanic there is)
         # Should record which group we are on
-        card["num_child_entities"] = (5, 5)  # num child entity types
+        card["num_child_entities"] = (2, 3)  # num child entity types
         # Should record child entity type we are on
         card["num_action_types"] = (1, 1)  # num_action_types
         card["num_patterns"] = (1, 1)  # num_patterns
@@ -48,8 +48,8 @@ class Deck_of_Cards_Class(Mechanic):
         card["pattern_symbol"] = (
         1, max([x for x in self.optional_pattern_symbols.keys() if type(x) is int]))  # pattern_symbol
         card["num_parent_entity_types"] = len(self.parent_entity_names)
-        card["parent_dup"] = (3, 3)  # range to duplicate parent entities in
-        card["child_dup"] = (8, 10)  # range to duplicate children entities in
+        card["parent_dup"] = (1, 1)  # range to duplicate parent entities in
+        card["child_dup"] = (4, 5)  # range to duplicate children entities in
         return card
 
     interpret_level = {

@@ -57,16 +57,26 @@ class Entity():
         self.increment_color = 'darkgreen'
         self.embedding = None
         self.parent_order = None
+        self.defaults_added = False
 
         self.entity_groups = []
     def __str__(self):
         builder = ''
         for key in self.__dict__.keys():
-            if key == 'embedding':
-                value = self.__dict__[key].shape
+            if key in ['grid_wdith',
+                       'original_piece_position',
+                       'current_piece_position',
+                       'star_color', 'hop_color',
+                       'hop_to_color', 'hop_over_color',
+                       'drag_color', 'reverse_color',
+                       'match_color', 'increment_color']:
+                pass
             else:
-                value = self.__dict__[key]
-            builder += "Key: " + key + " Value: " + str(value) + "\n"
+                if key == 'embedding':
+                    value = self.__dict__[key].shape
+                else:
+                    value = self.__dict__[key]
+                builder += "Key: " + key + " Value: " + str(value) + "\n"
         return builder
 
     def show(self):

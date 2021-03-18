@@ -18,14 +18,15 @@ class Square_Grid_Movement_Class(Mechanic):
         self.parent_entity_names = {i+1: name for i, name in enumerate(self.p["parent_entity_names"])} # hand, draw_pile, discard_pile, playing_area
         self.child_entity_name = "square_movement_piece"
         self.action_types = {"default": self.p["default_action_types"],
-                             1: "drag_to_capture",
-                             2: "hop_to_capture",
-                             3: "hop_over_capture",
-                             4: "drag",
-                             5: "hop"}
+                             # 1: "drag_to_capture",
+                             1: "hop_to_capture",
+                             # 3: "hop_over_capture",
+                             # 4: "drag",
+                             2: "hop"}
+
 
         self.parent_entities_to_action_types = {
-            "square" : ['drag', 'drag_to_capture', 'remove_captured_piece'],
+            "square" : ['hop', 'hop_to_capture', 'remove_captured_piece'],
             "reserve" : ['replace_captured_piece']
         }
 
@@ -58,11 +59,12 @@ class Square_Grid_Movement_Class(Mechanic):
             # Created a system to quickly generate the adjacency matrices
             adjusted_target_indices = np.arange(len_target)
 
+            # Figures out the north, east, south, and west indices
             index_dict = dict()
             index_dict["N"] = np.where(adjusted_target_indices // grid_length == 0)[0]
             index_dict["E"] = np.where(adjusted_target_indices % grid_length == grid_length - 1)[0]
-            index_dict["S"] = np.where(adjusted_target_indices % grid_length == 0)[0]
-            index_dict["W"] = np.where(adjusted_target_indices // grid_length == grid_length - 1)[0]
+            index_dict["W"] = np.where(adjusted_target_indices % grid_length == 0)[0]
+            index_dict["S"] = np.where(adjusted_target_indices // grid_length == grid_length - 1)[0]
 
             for index in adjusted_target_indices:
                 skip = False
@@ -82,10 +84,14 @@ class Square_Grid_Movement_Class(Mechanic):
                     real_index = target_indices[index]
                     real_move_to_index = target_indices[move_to_index]
                     matrix[real_index, real_move_to_index] = 1
-        elif pattern_symbol in self.default_pattern_symbols:
+        elif pattern_symbol in self.default_pattern_symbols.values():
             # Enable transfer to and from reserve
-            matrix[target_indices] = 1
-            matrix[:,target_indices] = 1
+            # matrix[target_indices] = 1
+            move_to_indices = []
+            for index in total_indices:
+                if index not in target_indices:
+                    move_to_indices.append(index)
+            matrix[target_indices, np.array(move_to_indices)] = 1
             matrix[np.diag_indices(grid_length)] = 0
 
         return matrix
@@ -107,6 +113,7 @@ class Square_Grid_Movement_Class(Mechanic):
             pattern_symbols = self.all_pattern_symbols[action_type]
             for pattern_symbol in pattern_symbols.values():
                 parent_adjacency_matrices[action_type][pattern_symbol] = self.create_adjacency_matrix(target_indices, total_indices, pattern_symbol)
+        return parent_adjacency_matrices
 
     def get_mechanic_dict(self):
         sq = {}
@@ -123,6 +130,7 @@ class Square_Grid_Movement_Class(Mechanic):
         sq["num_parent_entity_types"] = len(self.parent_entity_names)
 
         sq["parent_dup"] = (3, 3) # range to duplicate parent entities in
+        # sq["parent_dup"] = {"square": (3, 3), "reserve": (1,1)}
         sq["child_dup"] = (2, 2) # range to duplicate children entities in
         return sq
 

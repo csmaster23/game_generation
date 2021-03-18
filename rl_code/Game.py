@@ -126,7 +126,7 @@ class Game():#gym.Env):
           mechanic_obj = mechanic_objs[mechanic_num]
           break
       entity_group_dict[group_name].assign_entity_indices()
-      # entity_group_dict[group_name].create_adjacency_matrices(mechanic_obj)
+      entity_group_dict[group_name].create_adjacency_matrices(mechanic_obj)
 
     return entity_group_dict
 

@@ -14,6 +14,8 @@ class Initializer_Model():
         self.m_att = torch.nn.MultiheadAttention(embedding_size, factor)
         self.softmax = torch.nn.Softmax(0)
         self.embedding_size = embedding_size
+        self.symmetric_pattern_map = {"NW": "SE", "N": "S", "NE": "SW", "W": "E", "E": "W", "SW": "NE", "S": "N",
+                                      "SE": "NW"}
 
 
     def find_initials(self, embeddings):#, mask):
@@ -46,7 +48,6 @@ def initialize_some_entities(entity_dict, initializer_model, entity_groups, dupl
     all_keys = list(entity_dict.keys())
     for key in all_keys:
         entity = entity_dict[key]
-        print(str(entity))
         if len(entity.parent_names) == 0:
             # this code below has us only order the square parents not the card parents
             for ent_name in entity.entity_names:
@@ -114,6 +115,35 @@ def initialize_some_entities(entity_dict, initializer_model, entity_groups, dupl
                 parent_id = key
                 break
         entity_dict[p1_k].storage_location = parent_id
+        entity_dict[p1_k].entity_names.add('player_1')
+
+        # Make the pieces move symmetric
+        for action_type in entity_dict[p1_k].actions_to_patterns:
+            try:
+                for pattern_num in entity_dict[p1_k].actions_to_patterns[action_type]:
+                    new_pattern = []
+                    for symbol in entity_dict[p1_k].actions_to_patterns[action_type][pattern_num]:
+                        new_pattern.append(initializer_model.symmetric_pattern_map[symbol])
+                    entity_dict[p1_k].actions_to_patterns[action_type][pattern_num] = new_pattern
+            except KeyError:
+                pass
+
+        # Remove duplicate patterns
+
+        new_actions_to_patterns = dict()
+        for action_type in entity_dict[p1_k].actions_to_patterns:
+            previous_patterns = set()
+            new_actions_to_patterns[action_type] = dict()
+            for pattern_num in entity_dict[p1_k].actions_to_patterns[action_type]:
+                pattern = entity_dict[p1_k].actions_to_patterns[action_type][pattern_num]
+                tuple_pattern = tuple(pattern)
+                if tuple_pattern not in previous_patterns:
+                    new_actions_to_patterns[action_type][pattern_num] = pattern
+                    previous_patterns.add(tuple_pattern)
+
+        entity_dict[p1_k].actions_to_patterns = new_actions_to_patterns
+
+
 
     # place the player 2 child entities in the last few parent entities
     for i, p2_k in enumerate(new_p2_keys):
@@ -125,6 +155,21 @@ def initialize_some_entities(entity_dict, initializer_model, entity_groups, dupl
                 parent_id = key
                 break
         entity_dict[p2_k].storage_location = parent_id
+        entity_dict[p2_k].entity_names.add('player_2')
+
+        # Remove duplicate patterns
+        new_actions_to_patterns = dict()
+        for action_type in entity_dict[p2_k].actions_to_patterns:
+            previous_patterns = set()
+            new_actions_to_patterns[action_type] = dict()
+            for pattern_num in entity_dict[p2_k].actions_to_patterns[action_type]:
+                pattern = entity_dict[p2_k].actions_to_patterns[action_type][pattern_num]
+                tuple_pattern = tuple(pattern)
+                if tuple_pattern not in previous_patterns:
+                    new_actions_to_patterns[action_type][pattern_num] = pattern
+                    previous_patterns.add(tuple_pattern)
+
+        entity_dict[p2_k].actions_to_patterns = new_actions_to_patterns
 
     # place the cards in the draw pile
     more_parents = len(parent_keys)
@@ -136,23 +181,26 @@ def initialize_some_entities(entity_dict, initializer_model, entity_groups, dupl
             if len(entity_dict[a].parent_names) == 0: # meaning a parent that has no location
                 entity_dict[a].storage_location = more_parents
                 more_parents += 1
-                for ent in entity_dict[a].entity_names:
-                    if 'draw' in ent:
-                        draw_pile_key = a
             else: # meaning children who have no location
                 all_unknown_children_keys.append(a)
 
+        if 'draw_1' in entity_dict[a].entity_names:
+            draw_pile_key = a
+
     # loop through unknown children and place them in a draw pile
+    draw_pile = []
     for c_k in all_unknown_children_keys:
-        entity_dict[draw_pile_key].my_stored_ids.append(c_k)
+        draw_pile.append(c_k)
+         # Makes sure any pieces on the are the last
         entity_dict[c_k].storage_location = draw_pile_key
 
+    entity_dict[draw_pile_key] = draw_pile + entity_dict[draw_pile_key].my_stored_ids
+
+    for key in all_keys:
+        entity = entity_dict[key]
+        print(str(entity))
+
     return entity_dict
-
-
-
-
-
 
 
 def create_masks(entity_dict):
