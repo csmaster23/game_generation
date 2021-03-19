@@ -35,8 +35,10 @@ class EntityGroup():
 					self.parents_to_ids[parent_name].append(entity.id)
 				except KeyError:
 					self.parents_to_ids[parent_name] = [entity.id]
-	def assign_entity_indices(self):
+
+	def assign_entity_indices(self, entity_obj_dict):
 		cur_idx = 0
+		# First, assign dummy indices to each parent entity
 		for parent_name in self.parents_to_ids.keys():
 			for entity_id in self.parents_to_ids[parent_name]:
 				self.id_to_idx[entity_id] = cur_idx
@@ -44,13 +46,25 @@ class EntityGroup():
 				self.id_to_parent_name[entity_id] = parent_name
 				cur_idx += 1
 
+		# Reassign indices based on order determined in the initialization step
+		for parent_name in self.parents_to_ids.keys():
+			for entity_id in self.parents_to_ids[parent_name]:
+				pos = entity_obj_dict[entity_id].parent_order
+				if "square" in parent_name:
+					assert pos is not None
+					self.id_to_idx[entity_id] = pos
+					self.idx_to_id[pos] = entity_id
+
 	def create_adjacency_matrices(self, mechanic_obj):
 		all_indices = np.arange(len(self.id_to_idx))
 		for parent_name in self.parents_to_ids:
 			cur_indices = []
 			for entity_id in self.parents_to_ids[parent_name]:
 				cur_indices.append(self.id_to_idx[entity_id])
-			parent_adj_matrices = mechanic_obj.create_adjacency_matrices(all_indices, cur_indices, parent_name)
+			try:
+				parent_adj_matrices = mechanic_obj.create_adjacency_matrices(all_indices, cur_indices, parent_name)
+			except IndexError:
+				print()
 			self.adj_matrices[parent_name] = parent_adj_matrices
 
 	def get_cmap(self, n, name='viridis'):

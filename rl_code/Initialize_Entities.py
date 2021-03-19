@@ -40,7 +40,7 @@ class Initializer_Model():
         # symmetric_out = (soft_dot.T + soft_dot) / 2
         return soft_dot
 
-def initialize_some_entities(entity_dict, initializer_model, entity_groups, duplicated_embeddings, duplicate_combined_dict):
+def initialize_some_entities(entity_dict, initializer_model, duplicated_embeddings, duplicate_combined_dict):
     att_thresh = 0.3
     print("\n--- Top of Initialize Entity Positions in Game.py ---")
     print("Entity obj dict len: %s" % str(len(entity_dict.keys())))
@@ -194,11 +194,14 @@ def initialize_some_entities(entity_dict, initializer_model, entity_groups, dupl
          # Makes sure any pieces on the are the last
         entity_dict[c_k].storage_location = draw_pile_key
 
-    entity_dict[draw_pile_key] = draw_pile + entity_dict[draw_pile_key].my_stored_ids
+    entity_dict[draw_pile_key].my_stored_ids = draw_pile + entity_dict[draw_pile_key].my_stored_ids
 
     for key in all_keys:
         entity = entity_dict[key]
         print(str(entity))
+        # Don't know why we have something that connects to all the entities?
+        # if type(entity_dict[key]) is list:
+        #     del entity_dict[key]
 
     return entity_dict
 

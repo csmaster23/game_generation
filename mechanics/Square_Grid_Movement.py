@@ -91,6 +91,7 @@ class Square_Grid_Movement_Class(Mechanic):
             for index in total_indices:
                 if index not in target_indices:
                     move_to_indices.append(index)
+
             matrix[target_indices, np.array(move_to_indices)] = 1
             matrix[np.diag_indices(grid_length)] = 0
 

@@ -79,22 +79,22 @@ def start_rl(mechanic_list):
 
             # plot_child_entities(entity_obj_dict)
 
-            # ----------------------------------------- ENTITY GROUP CREATION ------------------------------------------
-
-            entity_groups = game_env.create_entity_groups(entity_obj_dict, mechanic_objs, mechanic_types)
-            # entity_groups['Square-Grid Movement 1'].visualize(entity_obj_dict)
-
             # ------------------------------------- ENTITY PLACE INITIALIZATION ----------------------------------------
             initializer_model = Initializer_Model()
-            entity_obj_dict = initialize_some_entities(entity_obj_dict, initializer_model, entity_groups, duplicated_embeddings, duplicate_combined_dict)
+            entity_obj_dict = initialize_some_entities(entity_obj_dict, initializer_model, duplicated_embeddings, duplicate_combined_dict)
 
-            # entity_list = game_env.generate_entities(state, trajectories)
-            # Combine entities
-            # combo_states = game_env.generate_entity_combo_states(agent, state)
-            final_entity_list = game_env.combine_entities(state)
 
-            # Generate game rules
-            game_obj = game_env.rule_generation(agent, final_entity_list)
+            # ----------------------------------------- ENTITY GROUP CREATION ------------------------------------------
+
+            entity_groups, parents_to_groups, actions_to_parents = game_env.create_entity_groups(entity_obj_dict, mechanic_objs, mechanic_types)
+            # entity_groups['Square-Grid Movement 1'].visualize(entity_obj_dict)
+
+
+            # -------------------------------------- INITIALIZE GAME ---------------------------------------------------
+            game_obj = game_env.create_game_obj(entity_obj_dict, entity_groups, mechanic_objs, mechanic_types, parents_to_groups, actions_to_parents)
+
+
+
 
             j += 1
             # Choose action from Q table

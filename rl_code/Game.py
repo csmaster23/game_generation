@@ -32,6 +32,231 @@ interpret_level = {
     }
 
 
+class GameObject:
+  def __init__(self, entity_object_dict, entity_groups, parents_to_groups, actions_to_parents, objective=None, num_players=2):
+    self.entity_object_dict = entity_object_dict
+    self.entity_groups = entity_groups
+    self.tracker_dict = self.generate_trackers(entity_object_dict, entity_groups)
+    self.parents_to_groups = parents_to_groups
+    self.actions_to_parents = actions_to_parents
+
+    # Take out specific entities from the gameplay
+    self.available_entity_dict = dict()
+    self.available_parents = set()
+    self.available_actions = dict()
+    self.available_children_ids = set()
+    for key in entity_object_dict:
+      entity = entity_object_dict[key]
+      use = False
+      for name in entity.entity_names:
+        if "square" in name or "square_movement" in name or "reserve" in name:
+          use = True
+          if ("square" in name or "reserve" in name) and "square_movement" not in name:
+            self.available_parents.add(name)
+          else:
+            self.available_children_ids.add(key)
+      if use:
+        self.available_entity_dict[key] = entity_object_dict[key]
+        # Add the possible actions to a set
+        self.available_entity_dict[key].possible_actions = set(self.available_entity_dict[key].actions_to_patterns.keys())
+
+    self.available_entity_ids = list(self.available_entity_dict.keys())
+    self.available_parents = list(self.available_parents)
+    self.available_children_ids = list(self.available_children_ids)
+
+    # Now set up the available actions per parent
+    for parent_name in self.available_parents:
+      entity_group = self.entity_groups[self.parents_to_groups[parent_name]]
+      self.available_actions[parent_name] = list(entity_group.adj_matrices[parent_name].keys())
+
+    # Capture piece_x, Capture all currently the only options
+
+    if objective is None:
+      self.objective = {"type": "Capture", "target": "all"}
+    else:
+      self.objective = objective
+    self.num_players = num_players
+    self.player_ids = {"player_{}".format(i+1): i for i in range(num_players)}
+
+    # Add complicated patterns to adjacency matrices based on the pieces we are using
+    self.create_pattern_adj_matrices()
+
+    # Set starting game state
+    game_state = {"turn": "player_1"}
+
+    # Check to make sure the game over function works
+    results = self.check_game_over()
+    # Check to make sure we can generate the action vector
+    action_vector, index_to_action = self.get_all_legal_actions(game_state)
+    print()
+
+  def create_pattern_adj_matrices(self):
+    for key in self.available_entity_ids:
+      entity = self.available_entity_dict[key]
+      for action_type in entity.actions_to_patterns:
+        patterns = entity.actions_to_patterns[action_type]
+        for pattern_key in patterns:
+          pattern = patterns[pattern_key]
+          if len(pattern) > 1:
+            tuple_pattern = tuple(pattern)
+            parent = self.actions_to_parents[action_type]
+            if tuple_pattern not in self.entity_groups.adj_matrices[parent][action_type]:
+              cur_adj_matrix = self.entity_groups.adj_matrices[parent][action_type][pattern[0]]
+              for symbol in pattern[1:]:
+                cur_adj_matrix = cur_adj_matrix @ self.entity_groups.adj_matrices[parent][action_type][symbol]
+              self.entity_groups.adj_matrices[parent][action_type][tuple_pattern] = cur_adj_matrix
+
+
+  def move(self, target_id, destination_id):
+    # Get the old location of the target
+    old_location = self.available_entity_dict[target_id].storage_location
+    # Remove entity id from old location
+    self.available_entity_dict[target_id].my_stored_ids.remove(target_id)
+    # Move the entity to that location
+    self.available_entity_dict[target_id].storage_location = destination_id
+    # Put entity id in the new location
+    self.available_entity_dict[destination_id].my_stored_ids.append(target_id)
+    # Update tracker dict
+    self.tracker_dict = self.generate_trackers(self.available_entity_dict, self.entity_groups)
+
+  def get_all_legal_actions(self, game_state):
+    """
+    This function goes through and gets all the legal actions and puts it into a vector along with a dictionary that goes from the possible move
+    index to something that can be easily fed into the game
+    :param game_state:
+    :return: action_vector (list), index_to_action (dictionary that maps each index in the action vector to an interpretable action)
+    """
+    player_id = game_state["turn"]
+    index = 0
+    action_vector = []
+    index_to_action = dict()
+    for key in self.available_children_ids:
+      entity = self.available_entity_dict[key]
+      # First get the parent
+      for parent_name in self.available_parents:
+        # Then get the possible action types for that parent
+        for action_type in self.available_actions[parent_name]:
+          # If our piece can do that action
+          entity_group = self.entity_groups[self.parents_to_groups[parent_name]]
+          # Get the target_entity_index
+          possible_moves_set = set()
+          all_possible_moves = []
+          if action_type in entity.possible_actions and player_id in entity.entity_names:
+            # Get where the current entity is stored
+            storage_location_id = entity.storage_location
+            # Get the index of that parent from the entity group
+            parent_idx = entity_group.id_to_idx[storage_location_id]
+            # Get the patterns from the current action type
+            patterns = entity.actions_to_patterns[action_type]
+            idx_to_pattern = dict()
+            # Cycle through the patterns
+            for pattern_key in patterns:
+              pattern = patterns[pattern_key]
+              if len(pattern) > 1:
+                pattern = tuple(pattern)
+              else:
+                pattern = pattern[0]
+              # Get a vector that determines the movements we can make
+              movement_vector = entity_group.adj_matrices[parent_name][action_type][pattern][parent_idx]
+              possible_moves = np.where(movement_vector==1)[0]
+              all_possible_moves += list(possible_moves)
+              # This will be very rare
+              for idx in possible_moves:
+                # We only want index to pattern when we play the game, or we will have redundant moves
+                idx_to_pattern[idx] = pattern
+            possible_moves_set = set(all_possible_moves)
+
+          for target_entity in range(entity_group.num_entities):
+            if target_entity in possible_moves_set:
+              action_vector.append(1)
+              destination_id = entity_group.idx_to_id[target_entity]
+              pattern = idx_to_pattern[target_entity]
+              # If we want to add a hop over capture option, we will need to add to the dictionary later
+              index_to_action[index] = {"target_id": key, "destination_id": destination_id, "action_type": action_type, "pattern" : pattern}
+            else:
+              action_vector.append(0)
+            index += 1
+
+    return action_vector, index_to_action
+
+
+
+
+
+
+
+
+
+  def check_list(self, l):
+    num_trues = 0
+    for item in l:
+      if item:
+        num_trues += 1
+
+    if num_trues > 1:
+      return False
+    else:
+      return True
+
+  def check_game_over(self):
+    # Eventually move this function to the mechanic portion
+    type = self.objective['type']
+    target = self.objective['target']
+    players_in_game = [False for _ in range(self.num_players)]
+    game_over = True
+
+    if type == "Capture":
+      # Loop through to see if the game is over
+      for key in self.tracker_dict:
+        if 'square' in key:
+          for square_idx in self.tracker_dict[key]:
+            for piece_names in self.tracker_dict[key][square_idx]:
+              if target in piece_names or target == "all":
+                for player_name in self.player_ids:
+                  if player_name in piece_names:
+                    players_in_game[self.player_ids[player_name]] = True
+                    game_over = self.check_list(players_in_game)
+                    break
+              if not game_over:
+                break
+            if not game_over:
+              break
+        if not game_over:
+          break
+
+    # Gets the players that are still in the game
+    players_still_in_game = {player_id : players_in_game[self.player_ids[player_id]] for player_id in self.player_ids}
+    return game_over, players_still_in_game
+
+
+
+
+
+  def generate_trackers(self, entity_object_dict, entity_groups):
+    tracker_dict = dict()
+
+    # Create a human readable tracker format for the game so that we can easily check that game mechanics are working
+    # Also use this to check winning conditions
+    for key in entity_groups:
+      group = entity_groups[key]
+      parent_ids = group.parents_to_ids
+      for parent_type in parent_ids:
+        tracker_dict[parent_type] = dict()
+        for parent_id in parent_ids[parent_type]:
+          parent_idx = entity_groups[key].id_to_idx[parent_id]
+
+          # Store the names of the children instead of their ids
+          child_info = []
+
+          for id in entity_object_dict[parent_id].my_stored_ids:
+            child_info.append(entity_object_dict[id].entity_names)
+
+          tracker_dict[parent_type][parent_idx] = child_info
+
+    return tracker_dict
+
+
+
 
 class Game():#gym.Env):
   """Custom Environment that follows gym interface"""
@@ -55,10 +280,11 @@ class Game():#gym.Env):
     #                 (HEIGHT, WIDTH, N_CHANNELS), dtype=np.uint8)
     self.mechanic_list = mechanic_list
     self.verbose=verbose
+    self.game_obj = None
 
   def step(self, action):
       # Execute one time step within the environment
-      r = self.simulate()
+      r = self.game_obj.simulate()
       s1 = self.represent_state()
       d = False
       return s1, r, d, 0.0
@@ -72,6 +298,18 @@ class Game():#gym.Env):
     return 0.0
   def represent_state(self):
     return self
+
+
+  def create_game_obj(self, entity_obj_dict, entity_groups, mechanic_objs, mechanic_types, parents_to_groups, actions_to_parents):
+    """
+    Creates the entity game object
+    :param entity_obj_dict:
+    :param mechanic_objs:
+    :param mechanic_types:
+    :return:
+    """
+
+    game_obj = GameObject(entity_obj_dict, entity_groups, parents_to_groups, actions_to_parents)
 
 
 
@@ -125,10 +363,23 @@ class Game():#gym.Env):
           mechanic_num = mechanic_types[mechanic_type]
           mechanic_obj = mechanic_objs[mechanic_num]
           break
-      entity_group_dict[group_name].assign_entity_indices()
+      entity_group_dict[group_name].assign_entity_indices(entity_object_dict)
       entity_group_dict[group_name].create_adjacency_matrices(mechanic_obj)
 
-    return entity_group_dict
+    parent_to_entity_group = dict()
+    actions_to_parents = dict()
+    for group_name in entity_group_dict:
+      for parent_name in entity_group_dict[group_name].parents_to_ids:
+        parent_to_entity_group[parent_name] = group_name
+        actions = entity_group_dict[group_name].adj_matrices[parent_name]
+        for action in actions:
+          actions_to_parents[action] = parent_name
+
+      # Record how many entities are in the group
+      entity_group = entity_group_dict[group_name]
+      entity_group.num_entities = len(entity_group.idx_to_id)
+
+    return entity_group_dict, parent_to_entity_group, actions_to_parents
 
 
 
