@@ -85,7 +85,6 @@ def start_rl(mechanic_list):
 
 
             # ----------------------------------------- ENTITY GROUP CREATION ------------------------------------------
-
             entity_groups, parents_to_groups, actions_to_parents = game_env.create_entity_groups(entity_obj_dict, mechanic_objs, mechanic_types)
             # entity_groups['Square-Grid Movement 1'].visualize(entity_obj_dict)
 

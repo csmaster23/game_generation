@@ -88,7 +88,8 @@ class Duplicate_Entities_Model():
                 lowest = min(first_max, second_max)
                 first_origins_lst = new_map[key[0]][1]  # gets list of combined origins from indices
                 second_origins_lst = new_map[key[1]][1]  # gets list of combined origins from indices
-                new_map[i] = [ (1, lowest), first_origins_lst + second_origins_lst + [key[0], key[1]]]
+                # new_map[i] = [ (1, lowest), first_origins_lst + second_origins_lst + [key[0], key[1]]]
+                new_map[i] = [(lowest, lowest), first_origins_lst + second_origins_lst + [key[0], key[1]]]
         return new_map
 
     def update_min_max(self, chosen_num, min_max, comb_map, embeddings, i):
