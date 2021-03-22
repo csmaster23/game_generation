@@ -88,6 +88,8 @@ class GameObject:
     results = self.check_game_over()
     # Check to make sure we can generate the action vector
     action_vector, index_to_action = self.get_all_legal_actions(game_state)
+    action_key = list(index_to_action.keys())[0]
+    self.move(index_to_action[action_key]['target_id'], index_to_action[action_key]['destination_id'])
     print()
 
   def create_pattern_adj_matrices(self):
@@ -111,7 +113,7 @@ class GameObject:
     # Get the old location of the target
     old_location = self.available_entity_dict[target_id].storage_location
     # Remove entity id from old location
-    self.available_entity_dict[target_id].my_stored_ids.remove(target_id)
+    self.available_entity_dict[old_location].my_stored_ids.remove(target_id)
     # Move the entity to that location
     self.available_entity_dict[target_id].storage_location = destination_id
     # Put entity id in the new location
@@ -178,14 +180,6 @@ class GameObject:
             index += 1
 
     return action_vector, index_to_action
-
-
-
-
-
-
-
-
 
   def check_list(self, l):
     num_trues = 0
