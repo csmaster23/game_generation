@@ -100,6 +100,7 @@ class GameObject:
 
     # Set starting game state
     self.game_state = {"turn": "player_1"}
+    self.sq_reserve_id = None
 
     # Check to make sure the game over function works
     results = self.check_game_over()
@@ -130,6 +131,21 @@ class GameObject:
                 cur_adj_matrix = cur_adj_matrix @ self.entity_groups.adj_matrices[parent][action_type][symbol]
               self.entity_groups.adj_matrices[parent][action_type][tuple_pattern] = cur_adj_matrix
 
+  def get_reserve_id(self):
+    if self.sq_reserve_id is None:
+      # pass # find sq_reserve id
+      for key in self.available_entity_dict:
+        if 'reserve_1' in self.available_entity_dict[key].entity_names:
+          return key                                                              # returns the id of the reserve square
+    else:
+      return self.sq_reserve_id
+
+  def find_opponent_id_by_parent(self, parent_id):
+    parent = self.available_entity_dict[parent_id]
+    for id in parent.my_stored_ids:
+      for name in self.available_entity_dict[id].entity_names:
+        print(name)
+    return parent
 
   def move(self, target_id, destination_id):
     # Get the old location of the target
@@ -142,6 +158,17 @@ class GameObject:
     self.available_entity_dict[destination_id].my_stored_ids.append(target_id)
     # Update tracker dict
     self.tracker_dict = self.generate_trackers(self.entity_object_dict, self.entity_groups)
+
+
+  def execute_action(self, chosen_action): # chosen action comes in as dict
+    print("Chosen action: %s" % str(chosen_action))
+    if 'capture' in chosen_action['action_type']: # capture move
+      reserve_id = self.get_reserve_id()
+      # move the other piece to reserve
+      opponent_piece_id = self.find_opponent_id_by_parent(chosen_action['destination_id'])
+      self.move(opponent_piece_id, reserve_id) # moves captured piece to reserve
+    self.move(chosen_action['target_id'], chosen_action['destination_id']) # moves current player piece to captured spot
+    return
 
   def check_if_capture_possible(self, action_type, target, dest):
     # TODO: Finish this method
