@@ -310,6 +310,7 @@ class Game():#gym.Env):
     """
 
     game_obj = GameObject(entity_obj_dict, entity_groups, parents_to_groups, actions_to_parents)
+    return game_obj
 
 
 
