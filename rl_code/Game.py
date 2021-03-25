@@ -124,11 +124,12 @@ class GameObject:
           if len(pattern) > 1:
             tuple_pattern = tuple(pattern)
             parent = self.actions_to_parents[action_type]
-            if tuple_pattern not in self.entity_groups.adj_matrices[parent][action_type]:
-              cur_adj_matrix = self.entity_groups.adj_matrices[parent][action_type][pattern[0]]
+            group_name = self.parents_to_groups[parent]
+            if tuple_pattern not in self.entity_groups[group_name].adj_matrices[parent][action_type]:
+              cur_adj_matrix = self.entity_groups[group_name].adj_matrices[parent][action_type][pattern[0]]
               for symbol in pattern[1:]:
-                cur_adj_matrix = cur_adj_matrix @ self.entity_groups.adj_matrices[parent][action_type][symbol]
-              self.entity_groups.adj_matrices[parent][action_type][tuple_pattern] = cur_adj_matrix
+                cur_adj_matrix = cur_adj_matrix @ self.entity_groups[group_name].adj_matrices[parent][action_type][symbol]
+              self.entity_groups[group_name].adj_matrices[parent][action_type][tuple_pattern] = cur_adj_matrix
 
 
   def move(self, target_id, destination_id):
@@ -205,31 +206,49 @@ class GameObject:
             parent_idx = entity_group.id_to_idx[storage_location_id]
             # Get the patterns from the current action type
             patterns = entity.actions_to_patterns[action_type]
-            idx_to_pattern = dict()
+            destination_ids_dict, idx_to_pattern = dict(), dict()
             # Cycle through the patterns
             for pattern_key in patterns:
               pattern = patterns[pattern_key]
-              if len(pattern) > 1:
-                pattern = tuple(pattern)
-              else:
-                pattern = pattern[0]
+              # if len(pattern) > 1:
+              #   pattern = tuple(pattern)
+              # else:
+              #   pattern = pattern[0]
               # Get a vector that determines the movements we can make
-              movement_vector = entity_group.adj_matrices[parent_name][action_type][pattern][parent_idx]
-              possible_moves = np.where(movement_vector==1)[0]
-              all_possible_moves += list(possible_moves)
-              # This will be very rare
-              for idx in possible_moves:
-                # We only want index to pattern when we play the game, or we will have redundant moves
-                idx_to_pattern[idx] = pattern
+              destination_ids = []
+              current_pattern = []
+              new_parent_idx = parent_idx
+              for pos, symbol in enumerate(pattern):
+                movement_vector = entity_group.adj_matrices[parent_name][action_type][symbol][new_parent_idx]
+                possible_moves = np.where(movement_vector==1)[0]
+                if len(possible_moves) > 1:
+                  # This means the pattern is only 1 long
+                  all_possible_moves += list(possible_moves)
+                  for move in possible_moves:
+                    destination_id = entity_group.idx_to_id[move]
+                    destination_ids_dict[move] = [destination_id]
+                    idx_to_pattern[move] = [symbol]
+                elif len(possible_moves) == 1:
+                  # This means the pattern could be more than one long
+                  destination_id = entity_group.idx_to_id[possible_moves[0]]
+                  destination_ids.append(destination_id)
+                  current_pattern.append(symbol)
+                  len_pattern = len(pattern)
+                  if "drag" in action_type or pos == len_pattern - 1:
+                    all_possible_moves += list(possible_moves)
+                    # Keeps track of each possible place we could stop at
+                    destination_ids_dict[possible_moves[0]] = destination_ids[:]
+                    idx_to_pattern[possible_moves[0]] = current_pattern[:]
+                  new_parent_idx = possible_moves[0]
+                else:
+                  break
+
             possible_moves_set = set(all_possible_moves)
 
           for target_entity in range(entity_group.num_entities):
             if target_entity in possible_moves_set:
               action_vector.append(1)
-              destination_id = entity_group.idx_to_id[target_entity]
-              pattern = idx_to_pattern[target_entity]
-              # If we want to add a hop over capture option, we will need to add to the dictionary later
-              index_to_action[index] = {"target_id": key, "destination_id": destination_id, "action_type": action_type, "pattern" : pattern}
+              index_to_action[index] = {"target_id": key, "destination_ids": destination_ids_dict[target_entity], "action_type": action_type, "pattern" : idx_to_pattern[target_entity]}
             else:
               action_vector.append(0)
             index += 1
