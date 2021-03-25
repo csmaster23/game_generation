@@ -19,6 +19,8 @@ def simulate_game(game_obj, agent_types=('Random', 'Random')):
         curr_agent = get_agent_by_name(curr_state['turn'], agents)
 
         curr_state, curr_agent, game_obj = simulate_turn(curr_state, curr_agent, game_obj)
+        if curr_agent is None:
+            break # the agent had no available choices so they lose
 
         game_finished, players_still_in_game = game_obj.check_game_over()           # check if game is over
         print("Game Finished Bool: %s" % str(game_finished))
@@ -34,7 +36,8 @@ def simulate_turn(state, agent, game):
     print("--top of simulating a turn for agent: %s" % str(agent.id))
     action_dict = game.get_actions_for_player(state['turn'])
     agent_choice = agent.choose_action(action_dict)
-
+    if agent_choice is None: # meaning no choice was available
+        return state, None, game
     game.execute_action(action_dict[agent_choice])
 
     return state, agent, game

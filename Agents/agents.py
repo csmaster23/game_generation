@@ -8,6 +8,8 @@ class Random_Agent:
     def choose_action(self, action_dict):
         print("Action Dict: %s" % str(action_dict))
         indices = list(action_dict.keys())
+        if len(indices) == 0:
+            return None
         choice = random.choice(indices)
         print("Player %s chooses action indice %s that is action type %s" % (str(self.id), str(choice), str(action_dict[choice]['action_type'])))
         return choice
