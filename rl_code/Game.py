@@ -99,15 +99,20 @@ class GameObject:
     self.create_pattern_adj_matrices()
 
     # Set starting game state
-    game_state = {"turn": "player_1"}
+    self.game_state = {"turn": "player_1"}
 
     # Check to make sure the game over function works
     results = self.check_game_over()
     # Check to make sure we can generate the action vector
-    action_vector, index_to_action = self.get_all_legal_actions(game_state)
+    action_vector, index_to_action = self.get_all_legal_actions(self.game_state)
     # action_key = list(index_to_action.keys())[0]
     # self.move(index_to_action[action_key]['target_id'], index_to_action[action_key]['destination_id'])
     print()
+
+  def get_game_state(self):
+    return self.game_state
+  def set_game_state(self, state):
+    self.game_state = state
 
   def create_pattern_adj_matrices(self):
     for key in self.available_entity_ids:
@@ -137,6 +142,39 @@ class GameObject:
     self.available_entity_dict[destination_id].my_stored_ids.append(target_id)
     # Update tracker dict
     self.tracker_dict = self.generate_trackers(self.entity_object_dict, self.entity_groups)
+
+  def check_if_capture_possible(self, action_type, target, dest):
+    # TODO: Finish this method
+    return True
+
+  def check_move_action_validity(self, action_type, target, dest):
+    # TODO: Finish this method
+    return True
+
+  def check_if_valid(self, action_dict):
+    print("Action dict: %s" % str(action_dict))
+    action_type = action_dict['action_type']
+    if 'remove_captured_piece' in action_type:      # we do not allow agents to take this action
+      return False
+    elif 'capture' in action_type:                  # is this specific capture action possible
+      return self.check_if_capture_possible(action_type, action_dict['target_id'], action_dict['destination_id'])
+    else:                                           # is this specific movement action possible
+      return self.check_move_action_validity(action_type, action_dict['target_id'], action_dict['destination_id'])
+
+  def get_actions_for_player(self, player_name):
+    print("Getting actions for %s" % str(player_name))
+    actions, indices = self.get_all_legal_actions(self.game_state)
+    valid_indices = {}
+    print("All actions: %s" % str(actions))
+    print("All indices to actions: %s" % str(indices))
+    for i, action in enumerate(actions):
+      if action == 1:
+        is_valid = self.check_if_valid(indices[i])
+        if is_valid:
+          valid_indices[i] = indices[i]
+
+    return valid_indices
+
 
   def get_all_legal_actions(self, game_state):
     """
