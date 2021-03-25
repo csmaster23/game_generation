@@ -100,6 +100,7 @@ class GameObject:
 
     # Set starting game state
     self.game_state = {"turn": "player_1"}
+    self.sq_reserve_id = None
 
     # Check to make sure the game over function works
     results = self.check_game_over()
@@ -131,6 +132,21 @@ class GameObject:
                 cur_adj_matrix = cur_adj_matrix @ self.entity_groups[group_name].adj_matrices[parent][action_type][symbol]
               self.entity_groups[group_name].adj_matrices[parent][action_type][tuple_pattern] = cur_adj_matrix
 
+  def get_reserve_id(self):
+    if self.sq_reserve_id is None:
+      for key in self.entity_object_dict:
+        if 'reserve_1' in self.entity_object_dict[key].entity_names:
+          return key                                                              # returns the id of the reserve square
+    else:
+      return self.sq_reserve_id
+
+  def find_opponent_id_by_parent(self, parent_id):
+    parent = self.entity_object_dict[parent_id]
+    for id in parent.my_stored_ids:
+      for name in self.entity_object_dict[id].entity_names:
+        if 'square' in name:
+          return id
+    return None
 
   def move(self, target_id, destination_id):
     # Get the old location of the target
@@ -144,6 +160,19 @@ class GameObject:
     # Update tracker dict
     self.tracker_dict = self.generate_trackers(self.entity_object_dict, self.entity_groups)
 
+
+  def execute_action(self, chosen_action): # chosen action comes in as dict
+    # print("Chosen action: %s" % str(chosen_action))
+    if 'capture' in chosen_action['action_type']: # capture move
+      reserve_id = self.get_reserve_id()
+      # move the other piece to reserve
+      opponent_piece_id = self.find_opponent_id_by_parent(chosen_action['destination_ids'][-1])
+      assert opponent_piece_id is not None
+      self.move(opponent_piece_id, reserve_id) # moves captured piece to reserve
+
+    self.move(chosen_action['target_id'], chosen_action['destination_ids'][-1]) # moves current player piece to captured spot
+    return
+
   def check_if_capture_possible(self, action_type, target, dest):
     # TODO: Finish this method
     return True
@@ -153,26 +182,23 @@ class GameObject:
     return True
 
   def check_if_valid(self, action_dict):
-    print("Action dict: %s" % str(action_dict))
+    # print("Action dict: %s" % str(action_dict))
     action_type = action_dict['action_type']
     if 'remove_captured_piece' in action_type:      # we do not allow agents to take this action
       return False
     elif 'capture' in action_type:                  # is this specific capture action possible
-      return self.check_if_capture_possible(action_type, action_dict['target_id'], action_dict['destination_id'])
+      return self.check_if_capture_possible(action_type, action_dict['target_id'], action_dict['destination_ids'][-1])
     else:                                           # is this specific movement action possible
-      return self.check_move_action_validity(action_type, action_dict['target_id'], action_dict['destination_id'])
+      return self.check_move_action_validity(action_type, action_dict['target_id'], action_dict['destination_ids'][-1])
 
   def get_actions_for_player(self, player_name):
-    print("Getting actions for %s" % str(player_name))
     actions, indices = self.get_all_legal_actions(self.game_state)
     valid_indices = {}
-    print("All actions: %s" % str(actions))
-    print("All indices to actions: %s" % str(indices))
-    for i, action in enumerate(actions):
-      if action == 1:
-        is_valid = self.check_if_valid(indices[i])
-        if is_valid:
-          valid_indices[i] = indices[i]
+
+    for i, action in enumerate(indices):
+      is_valid = self.check_if_valid(indices[action])
+      if is_valid:
+        valid_indices[action] = indices[action]
 
     return valid_indices
 
