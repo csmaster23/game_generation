@@ -140,11 +140,11 @@ class GameObject:
     else:
       return self.sq_reserve_id
 
-  def find_opponent_id_by_parent(self, parent_id):
+  def find_child_id_by_parent(self, parent_id):
     parent = self.entity_object_dict[parent_id]
     for id in parent.my_stored_ids:
       for name in self.entity_object_dict[id].entity_names:
-        if 'square' in name:
+        if 'square_movement' in name:
           return id
     return None
 
@@ -166,7 +166,7 @@ class GameObject:
     if 'capture' in chosen_action['action_type']: # capture move
       reserve_id = self.get_reserve_id()
       # move the other piece to reserve
-      opponent_piece_id = self.find_opponent_id_by_parent(chosen_action['destination_ids'][-1])
+      opponent_piece_id = self.find_child_id_by_parent(chosen_action['destination_ids'][-1])
       assert opponent_piece_id is not None
       self.move(opponent_piece_id, reserve_id) # moves captured piece to reserve
 
@@ -174,12 +174,25 @@ class GameObject:
     return
 
   def check_if_capture_possible(self, action_type, target, dest):
-    # TODO: Finish this method
-    return True
+    cur_player = self.game_state["turn"]
+    result_id = self.find_child_id_by_parent(dest)
+    if result_id is None:
+      # There is no piece in that space we can capture
+      return False
+    else:
+      # There is a child piece in the target space that is one of our opponent's
+      if cur_player not in self.entity_object_dict[result_id].entity_names:
+        return True
+      else:
+        return False
 
   def check_move_action_validity(self, action_type, target, dest):
-    # TODO: Finish this method
-    return True
+    result_id = self.find_child_id_by_parent(dest)
+    # Checks to see if there is a square movement piece in the destination spot
+    if result_id is None:
+      return True
+    else:
+      return False
 
   def check_if_valid(self, action_dict):
     # print("Action dict: %s" % str(action_dict))
