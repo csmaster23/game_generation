@@ -62,6 +62,7 @@ class EntityGroup():
 			for entity_id in self.parents_to_ids[parent_name]:
 				cur_indices.append(self.id_to_idx[entity_id])
 			try:
+				cur_indices.sort()
 				parent_adj_matrices = mechanic_obj.create_adjacency_matrices(all_indices, cur_indices, parent_name)
 			except IndexError:
 				print()
