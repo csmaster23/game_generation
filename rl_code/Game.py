@@ -192,16 +192,13 @@ class GameObject:
       return self.check_move_action_validity(action_type, action_dict['target_id'], action_dict['destination_ids'][-1])
 
   def get_actions_for_player(self, player_name):
-    # print("Getting actions for %s" % str(player_name))
     actions, indices = self.get_all_legal_actions(self.game_state)
     valid_indices = {}
-    # print("All actions: %s" % str(actions))
-    # print("All indices to actions: %s" % str(indices))
-    for i, action in enumerate(actions):
-      if action == 1:
-        is_valid = self.check_if_valid(indices[i])
-        if is_valid:
-          valid_indices[i] = indices[i]
+
+    for i, action in enumerate(indices):
+      is_valid = self.check_if_valid(indices[action])
+      if is_valid:
+        valid_indices[action] = indices[action]
 
     return valid_indices
 
