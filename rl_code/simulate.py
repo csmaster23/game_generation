@@ -13,9 +13,9 @@ def simulate_game(game_obj, agent_types=('Random', 'Random')):
     combined_turns = 1000
     game_finished = False
     turn_counter = 0
-    while game_finished is False or turn_counter < combined_turns:
+    while game_finished is False and turn_counter < combined_turns:
         curr_state = game_obj.get_game_state()                                      # get current game state
-        print("Player %s Turn" % str(curr_state['turn']))
+        print("Player %s Turn for iteration %s" % (str(curr_state['turn']), str(turn_counter)))
         curr_agent = get_agent_by_name(curr_state['turn'], agents)
 
         curr_state, curr_agent, game_obj = simulate_turn(curr_state, curr_agent, game_obj)
