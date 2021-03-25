@@ -95,7 +95,6 @@ def start_rl(mechanic_list):
 
             simulate_game(game_obj)
 
-
             j += 1
             # Choose action from Q table
             a = np.argmax(Q[s, :] + np.random.randn(1, game_env.action_space.n) * (1. / (i + 1)))

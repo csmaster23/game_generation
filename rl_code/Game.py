@@ -34,9 +34,19 @@ interpret_level = {
 
 class GameObject:
   def __init__(self, entity_object_dict, entity_groups, parents_to_groups, actions_to_parents, objective=None, num_players=2):
+    """
+    Creates a game object that an agent can interact with. Defines the legal actions and movements for each piece type.
+    :param entity_object_dict:
+    :param entity_groups:
+    :param parents_to_groups:
+    :param actions_to_parents:
+    :param objective:
+    :param num_players:
+    """
     self.entity_object_dict = entity_object_dict
     self.entity_groups = entity_groups
     self.tracker_dict = self.generate_trackers(entity_object_dict, entity_groups)
+    print(self.tracker_dict)
     self.parents_to_groups = parents_to_groups
     self.actions_to_parents = actions_to_parents
 
@@ -45,6 +55,7 @@ class GameObject:
     self.available_parents = set()
     self.available_actions = dict()
     self.available_children_ids = set()
+    self.available_entity_group_names = set()
     for key in entity_object_dict:
       entity = entity_object_dict[key]
       use = False
@@ -69,8 +80,14 @@ class GameObject:
       entity_group = self.entity_groups[self.parents_to_groups[parent_name]]
       self.available_actions[parent_name] = list(entity_group.adj_matrices[parent_name].keys())
 
-    # Capture piece_x, Capture all currently the only options
+    # Gets the entity groups we want. Here we only care about square grid movement
+    self.available_entity_group_names = {name for name in self.entity_groups if "Square-Grid Movement" in name}
+    self.available_entity_groups = dict()
+    for group_name in self.available_entity_group_names:
+      entity_group = self.entity_groups[group_name]
+      self.available_entity_groups[group_name] = entity_group
 
+    # Capture piece_x, Capture all currently the only options
     if objective is None:
       self.objective = {"type": "Capture", "target": "all"}
     else:
@@ -88,6 +105,8 @@ class GameObject:
     results = self.check_game_over()
     # Check to make sure we can generate the action vector
     action_vector, index_to_action = self.get_all_legal_actions(game_state)
+    # action_key = list(index_to_action.keys())[0]
+    # self.move(index_to_action[action_key]['target_id'], index_to_action[action_key]['destination_id'])
     print()
 
   def create_pattern_adj_matrices(self):
@@ -111,13 +130,13 @@ class GameObject:
     # Get the old location of the target
     old_location = self.available_entity_dict[target_id].storage_location
     # Remove entity id from old location
-    self.available_entity_dict[target_id].my_stored_ids.remove(target_id)
+    self.available_entity_dict[old_location].my_stored_ids.remove(target_id)
     # Move the entity to that location
     self.available_entity_dict[target_id].storage_location = destination_id
     # Put entity id in the new location
     self.available_entity_dict[destination_id].my_stored_ids.append(target_id)
     # Update tracker dict
-    self.tracker_dict = self.generate_trackers(self.available_entity_dict, self.entity_groups)
+    self.tracker_dict = self.generate_trackers(self.entity_object_dict, self.entity_groups)
 
   def get_all_legal_actions(self, game_state):
     """
@@ -137,7 +156,7 @@ class GameObject:
         # Then get the possible action types for that parent
         for action_type in self.available_actions[parent_name]:
           # If our piece can do that action
-          entity_group = self.entity_groups[self.parents_to_groups[parent_name]]
+          entity_group = self.available_entity_groups[self.parents_to_groups[parent_name]]
           # Get the target_entity_index
           possible_moves_set = set()
           all_possible_moves = []
@@ -178,14 +197,6 @@ class GameObject:
             index += 1
 
     return action_vector, index_to_action
-
-
-
-
-
-
-
-
 
   def check_list(self, l):
     num_trues = 0
@@ -248,8 +259,11 @@ class GameObject:
           # Store the names of the children instead of their ids
           child_info = []
 
-          for id in entity_object_dict[parent_id].my_stored_ids:
-            child_info.append(entity_object_dict[id].entity_names)
+          try:
+            for id in entity_object_dict[parent_id].my_stored_ids:
+              child_info.append(entity_object_dict[id].entity_names)
+          except KeyError:
+            print()
 
           tracker_dict[parent_type][parent_idx] = child_info
 
