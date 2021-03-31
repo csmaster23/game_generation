@@ -371,7 +371,7 @@ class Game():#gym.Env):
   """Custom Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, mechanic_list, verbose=False):
+  def __init__(self, mechanic_list, epsilon=.1, verbose=False):
     super(Game, self).__init__()
     # Define action and observation space
     # They must be gym.spaces objects
@@ -390,6 +390,7 @@ class Game():#gym.Env):
     self.mechanic_list = mechanic_list
     self.verbose=verbose
     self.game_obj = None
+    self.epsilon = epsilon
 
   def step(self, action):
       # Execute one time step within the environment
@@ -659,7 +660,14 @@ class Game():#gym.Env):
       self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
     elif interpret_level[new_level] in ["selected_action_type"]: # These actions need to be selected and masked out
       return_vals = agent.get_decision(tree_trajectories, self.selected_action_mask)
-      selection = torch.argmax(return_vals["masked_probs"]).item()
+
+      # Epsilon greedy strategy
+      val = np.random.random()
+      if val >= self.epsilon:
+        selection = torch.argmax(return_vals["masked_probs"]).item()
+      else:
+        selection = np.random.choice(np.where(return_vals["masked_probs"][0]>0.0)[0])
+
       self.selected_action_mask[selection] = float("-inf")
       if self.verbose:
         print("On action selection. The agent chose", selection)
@@ -683,7 +691,12 @@ class Game():#gym.Env):
 
       # Agent makes a decision
       return_vals = agent.get_decision(tree_trajectories, mask)
-      selection = torch.argmax(return_vals["masked_probs"]).item()
+
+      val = np.random.random()
+      if val >= self.epsilon:
+        selection = torch.argmax(return_vals["masked_probs"]).item()
+      else:
+        selection = np.random.choice(np.where(return_vals["masked_probs"][0] > 0.0)[0])
 
       # Update our state representation
       tree_trajectories[-1][0, new_level] = selection
