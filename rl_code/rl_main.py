@@ -4,6 +4,7 @@ import numpy as np
 from rl_code.Game import Game
 from visualize import plot_child_entities
 from rl_code.simulate import simulate_game
+from rl_code.value import get_value_basic
 from mechanics.Cards import Deck_of_Cards_Class
 from rl_code.Agent import Agent, RandomAgent, CreatorAgent
 from rl_code.Duplicate_Entities import Duplicate_Entities_Model
@@ -92,6 +93,10 @@ def start_rl(mechanic_list):
 
             # -------------------------------------- INITIALIZE GAME ---------------------------------------------------
             game_obj = game_env.create_game_obj(entity_obj_dict, entity_groups, mechanic_objs, mechanic_types, parents_to_groups, actions_to_parents)
+
+            value = get_value_basic(game_obj)
+
+
 
             simulate_game(game_obj)
 

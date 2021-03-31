@@ -1,5 +1,7 @@
 import os
 import sys
+
+from rl_code.game_creation_main import collect_experience
 from rl_code.rl_main import start_rl
 from game_embedding.random_mechanics import generate_random_mechanics
 
@@ -10,7 +12,9 @@ def main(load_game, sim_type):
         num_mechanics = 2
         game_mechanics = generate_random_mechanics(num_mechanics)
 
-        final_game_obj = start_rl(game_mechanics)
+        # final_game_obj = start_rl(game_mechanics)
+
+        collect_experience(game_mechanics)
 
         # save finalized game object
 

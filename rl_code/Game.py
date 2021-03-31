@@ -46,7 +46,7 @@ class GameObject:
     self.entity_object_dict = entity_object_dict
     self.entity_groups = entity_groups
     self.tracker_dict = self.generate_trackers(entity_object_dict, entity_groups)
-    print(self.tracker_dict)
+    # print(self.tracker_dict)
     self.parents_to_groups = parents_to_groups
     self.actions_to_parents = actions_to_parents
 
@@ -108,7 +108,6 @@ class GameObject:
     action_vector, index_to_action = self.get_all_legal_actions(self.game_state)
     # action_key = list(index_to_action.keys())[0]
     # self.move(index_to_action[action_key]['target_id'], index_to_action[action_key]['destination_id'])
-    print()
 
   def get_game_state(self):
     return self.game_state
@@ -372,7 +371,7 @@ class Game():#gym.Env):
   """Custom Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, mechanic_list, verbose=True):
+  def __init__(self, mechanic_list, verbose=False):
     super(Game, self).__init__()
     # Define action and observation space
     # They must be gym.spaces objects
@@ -659,8 +658,8 @@ class Game():#gym.Env):
     elif interpret_level[new_level] in ["selected_parent_entity"]:
       self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
     elif interpret_level[new_level] in ["selected_action_type"]: # These actions need to be selected and masked out
-      probs = agent.take_action(tree_trajectories, self.selected_action_mask)
-      selection = torch.argmax(probs).item()
+      return_vals = agent.get_decision(tree_trajectories, self.selected_action_mask)
+      selection = torch.argmax(return_vals["masked_probs"]).item()
       self.selected_action_mask[selection] = float("-inf")
       if self.verbose:
         print("On action selection. The agent chose", selection)
@@ -683,8 +682,8 @@ class Game():#gym.Env):
         self.selected_action_mask = mask.clone()
 
       # Agent makes a decision
-      probs = agent.take_action(tree_trajectories, mask)
-      selection = torch.argmax(probs).item()
+      return_vals = agent.get_decision(tree_trajectories, mask)
+      selection = torch.argmax(return_vals["masked_probs"]).item()
 
       # Update our state representation
       tree_trajectories[-1][0, new_level] = selection

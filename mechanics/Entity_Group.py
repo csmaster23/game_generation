@@ -51,7 +51,10 @@ class EntityGroup():
 			for entity_id in self.parents_to_ids[parent_name]:
 				pos = entity_obj_dict[entity_id].parent_order
 				if "square" in parent_name:
-					assert pos is not None
+					try:
+						assert pos is not None
+					except AssertionError:
+						print()
 					self.id_to_idx[entity_id] = pos
 					self.idx_to_id[pos] = entity_id
 
