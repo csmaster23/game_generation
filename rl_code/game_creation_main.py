@@ -112,7 +112,7 @@ def collect_experience(args, mechanic_list, creation_runs_until_update=100):
     trainer.accelerator.setup(trainer, model)
     trainer.save_checkpoint(os.path.join(args.root_dir,"checkpoints","model.ckpt"))
 
-    games_to_reach_min_epsilon = 100000
+    games_to_reach_min_epsilon = 0
     current_game_num = 0
     while True:
         # Load the model
