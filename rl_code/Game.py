@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import gym
 import numpy as np
 # from gym import spaces
@@ -43,12 +45,26 @@ class GameObject:
     :param objective:
     :param num_players:
     """
-    self.entity_object_dict = entity_object_dict
-    self.entity_groups = entity_groups
+    self.initial_entity_object_dict = entity_object_dict
+    self.initial_entity_groups = entity_groups
     self.tracker_dict = self.generate_trackers(entity_object_dict, entity_groups)
+
     # print(self.tracker_dict)
     self.parents_to_groups = parents_to_groups
     self.actions_to_parents = actions_to_parents
+
+    # Set objective and num_players
+    self.objective = objective
+    self.num_players = num_players
+
+    self.reset()
+
+
+
+  def reset(self):
+
+    self.entity_object_dict = deepcopy(self.initial_entity_object_dict)
+    self.entity_groups = deepcopy(self.initial_entity_groups)
 
     # Take out specific entities from the gameplay
     self.available_entity_dict = dict()
@@ -56,8 +72,8 @@ class GameObject:
     self.available_actions = dict()
     self.available_children_ids = set()
     self.available_entity_group_names = set()
-    for key in entity_object_dict:
-      entity = entity_object_dict[key]
+    for key in self.entity_object_dict:
+      entity = self.entity_object_dict[key]
       use = False
       for name in entity.entity_names:
         if "square" in name or "square_movement" in name or "reserve" in name:
@@ -67,9 +83,10 @@ class GameObject:
           else:
             self.available_children_ids.add(key)
       if use:
-        self.available_entity_dict[key] = entity_object_dict[key]
+        self.available_entity_dict[key] = self.entity_object_dict[key]
         # Add the possible actions to a set
-        self.available_entity_dict[key].possible_actions = set(self.available_entity_dict[key].actions_to_patterns.keys())
+        self.available_entity_dict[key].possible_actions = set(
+          self.available_entity_dict[key].actions_to_patterns.keys())
 
     self.available_entity_ids = list(self.available_entity_dict.keys())
     self.available_parents = list(self.available_parents)
@@ -88,12 +105,12 @@ class GameObject:
       self.available_entity_groups[group_name] = entity_group
 
     # Capture piece_x, Capture all currently the only options
-    if objective is None:
+    if self.objective is None:
       self.objective = {"type": "Capture", "target": "all"}
     else:
-      self.objective = objective
-    self.num_players = num_players
-    self.player_ids = {"player_{}".format(i+1): i for i in range(num_players)}
+      self.objective = self.objective
+
+    self.player_ids = {"player_{}".format(i + 1): i for i in range(self.num_players)}
 
     # Add complicated patterns to adjacency matrices based on the pieces we are using
     self.create_pattern_adj_matrices()
@@ -102,12 +119,12 @@ class GameObject:
     self.game_state = {"turn": "player_1"}
     self.sq_reserve_id = None
 
-    # Check to make sure the game over function works
-    results = self.check_game_over()
-    # Check to make sure we can generate the action vector
-    action_vector, index_to_action = self.get_all_legal_actions(self.game_state)
-    # action_key = list(index_to_action.keys())[0]
-    # self.move(index_to_action[action_key]['target_id'], index_to_action[action_key]['destination_id'])
+    # # Check to make sure the game over function works
+    # results = self.check_game_over()
+    # # Check to make sure we can generate the action vector
+    # action_vector, index_to_action = self.get_all_legal_actions(self.game_state)
+    # # action_key = list(index_to_action.keys())[0]
+    # # self.move(index_to_action[action_key]['target_id'], index_to_action[action_key]['destination_id'])
 
   def get_game_state(self):
     return self.game_state
@@ -371,7 +388,7 @@ class Game():#gym.Env):
   """Custom Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, mechanic_list, epsilon=.1, verbose=False):
+  def __init__(self, mechanic_list, epsilon=.3, verbose=False):
     super(Game, self).__init__()
     # Define action and observation space
     # They must be gym.spaces objects
@@ -391,6 +408,7 @@ class Game():#gym.Env):
     self.verbose=verbose
     self.game_obj = None
     self.epsilon = epsilon
+    self.generator_data = []
 
   def step(self, action):
       # Execute one time step within the environment
@@ -659,6 +677,7 @@ class Game():#gym.Env):
     elif interpret_level[new_level] in ["selected_parent_entity"]:
       self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
     elif interpret_level[new_level] in ["selected_action_type"]: # These actions need to be selected and masked out
+      cat_trajectories = torch.cat(tree_trajectories)
       return_vals = agent.get_decision(tree_trajectories, self.selected_action_mask)
 
       # Epsilon greedy strategy
@@ -674,6 +693,11 @@ class Game():#gym.Env):
 
       # Update our state representation
       tree_trajectories[-1][0, new_level] = selection
+
+      # Record data
+      cat_new_trajectories = torch.cat(tree_trajectories)
+      self.generator_data.append((cat_trajectories, cat_new_trajectories, selection))
+
       self.make_agent_selections(agent, tree_trajectories, cur_dict, new_level, iteration)
 
 
@@ -690,6 +714,7 @@ class Game():#gym.Env):
         self.selected_action_mask = mask.clone()
 
       # Agent makes a decision
+      cat_trajectories = torch.cat(tree_trajectories)
       return_vals = agent.get_decision(tree_trajectories, mask)
 
       val = np.random.random()
@@ -700,6 +725,10 @@ class Game():#gym.Env):
 
       # Update our state representation
       tree_trajectories[-1][0, new_level] = selection
+
+      # Record data
+      cat_new_trajectories = torch.cat(tree_trajectories)
+      self.generator_data.append((cat_trajectories, cat_new_trajectories, selection))
 
       if interpret_level[new_level] == "pattern_symbol":
         tree_trajectories.append(tree_trajectories[-1].clone())  # FIXME we may have extra tree trajectory at the end

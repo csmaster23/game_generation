@@ -124,7 +124,7 @@ class Square_Grid_Movement_Class(Mechanic):
         sq["num_child_entities"] = (3, 4)  # num child entity types
         # Should record child entity type we are on
         sq["num_action_types"] = (1, max([x for x in self.action_types.keys() if type(x) is int]))  # num_action_types
-        sq["num_patterns"] = (1, 4)  # num_patterns
+        sq["num_patterns"] = (1, 6)  # num_patterns
         # Should record which pattern we are looking at
         sq["pattern_length"] = (1, 2)  # pattern_length
         sq["pattern_symbol"] = (1, max([x for x in self.optional_pattern_symbols.keys() if type(x) is int]))  # pattern_symbol

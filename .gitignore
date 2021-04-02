@@ -131,3 +131,5 @@ dmypy.json
 
 # Other
 .idea/
+/data/
+/meta_data/

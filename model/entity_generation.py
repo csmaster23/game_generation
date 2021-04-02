@@ -136,7 +136,7 @@ class ManyToOneEncoder(nn.Module):
 
         # Get the decoders
         decoder_layer = TransformerDecoderLayer(d_model=self.d_model, nhead=4, dropout=.2)
-        self.decoder = TransformerDecoder(decoder_layer, num_layers=6)
+        self.decoder = TransformerDecoder(decoder_layer, num_layers=12)
 
         # Embedder and positional encoder
         self.gen_embedder = torch.nn.Embedding(100, 5, padding_idx=0)
@@ -186,8 +186,14 @@ class ManyToOneEncoder(nn.Module):
 
         return {"logits": out, "masked_probs": probs}
 
+    def normalize_values(self,values,eps=1e-5):
+        """
+        Implement this if needed
+        :return:
+        """
+        return ((values - torch.min(values,dim=1,keepdim=True).values) / (torch.max(values,dim=1,keepdim=True).values - torch.min(values,dim=1,keepdim=True).values + 1e-5))*2 - 1
 
-    def forward(self, trajectories, mask, return_attention_weights=False):
+    def forward(self, trajectories, return_attention_weights=False, device='cpu'):
         """
         This function is used for training
         Args:
@@ -197,13 +203,17 @@ class ManyToOneEncoder(nn.Module):
         """
         N, T, o = trajectories.shape
         # Here T is the sequence length
-        x = self.gen_embedder(torch.cat(trajectories)).reshape(T, N, -1)
+        x = self.gen_embedder(trajectories.long()).reshape(N, T, -1)
+        x = x.transpose(0,1)
 
         # Get the positional encoding
         x = self.pos_encoder(x)
 
         # Get the target mask
-        tgt_mask = self.decoder.generate_square_subsequent_mask(x.shape[0]).to(self.device)
+        tgt_mask = self.decoder.generate_square_subsequent_mask(x.shape[0])
+
+        # Get the target key padding mask
+        tgt_key_padding_mask = None
 
         # Feed through the decoder
         x = self.decoder(x, tgt_mask=tgt_mask)
@@ -214,11 +224,9 @@ class ManyToOneEncoder(nn.Module):
 
         if return_attention_weights:
             out, attn_weights = self.attn(x, return_attention_weights=return_attention_weights)
-            probs = self.softmax(out.view(-1) + mask.unsqueeze(0))
             # out: N x 1 x d_model
-            return {"logits": out, "masked_probs": probs, "attention_weights": attn_weights}
+            return {"logits": out, "attention_weights": attn_weights}
 
         out = self.linear(self.attn(x))
-        probs = self.softmax(out.view(-1) + mask.unsqueeze(0))
 
-        return {"logits": out, "masked_probs": probs}
+        return {"logits": out}
